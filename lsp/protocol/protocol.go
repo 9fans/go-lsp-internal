@@ -6,6 +6,7 @@ package protocol
 
 import (
 	"context"
+	"log"
 
 	"github.com/sourcegraph/jsonrpc2"
 )
@@ -35,4 +36,28 @@ func sendParseError(ctx context.Context, conn *jsonrpc2.Conn, id jsonrpc2.ID, er
 		Message: err.Error(),
 	}
 	return conn.ReplyWithError(ctx, id, rpcerr)
+}
+
+type handler struct {
+	client Client
+}
+
+func CreateHandler(client Client) jsonrpc2.Handler {
+	return &handler{
+		client: client,
+	}
+}
+
+func (h *handler) Handle(ctx context.Context, conn *jsonrpc2.Conn, r *jsonrpc2.Request) {
+	ok, err := clientDispatch(ctx, h.client, conn, r)
+	if !ok {
+		rpcerr := &jsonrpc2.Error{
+			Code:    jsonrpc2.CodeMethodNotFound,
+			Message: "method not implemented",
+		}
+		err = conn.Reply(ctx, r.ID, rpcerr)
+	}
+	if err != nil {
+		log.Printf("rpc reply failed: %v", err)
+	}
 }
