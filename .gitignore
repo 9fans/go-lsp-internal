@@ -1,1 +1,3 @@
 lsp/protocol/generate/generate
+cmd/lspclient/lspclient
+cmd/lspclient/gopls.log
