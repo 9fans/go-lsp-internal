@@ -6,9 +6,9 @@ package protocol
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"io"
+	// "encoding/json"
+	// "fmt"
+	// "io"
 
 	"github.com/sourcegraph/jsonrpc2"
 	// "golang.org/x/tools/internal/event"
@@ -104,11 +104,11 @@ type clientDispatcher struct {
 // func ServerDispatcherV2(conn *jsonrpc2_v2.Connection) Server {
 // 	return &serverDispatcher{sender: clientConnV2{conn}}
 // }
-//
-// type serverDispatcher struct {
-// 	sender connSender
-// }
-//
+
+type serverDispatcher struct {
+	sender *jsonrpc2.Conn
+}
+
 // func ClientHandler(client Client, handler jsonrpc2.Handler) jsonrpc2.Handler {
 // 	return func(ctx context.Context, reply jsonrpc2.Replier, req jsonrpc2.Request) error {
 // 		if ctx.Err() != nil {
@@ -280,7 +280,7 @@ type clientDispatcher struct {
 // 	sender.Notify(ctx, "$/cancelRequest", &CancelParams{ID: &id})
 // }
 
-func reply(ctx context.Context, conn jsonrpc2.Conn, id jsonrpc2.ID, result any, err error) error {
+func reply(ctx context.Context, conn *jsonrpc2.Conn, id jsonrpc2.ID, result any, err error) error {
 	if err != nil {
 		rpcerr := &jsonrpc2.Error{
 			Code: jsonrpc2.CodeInternalError,
@@ -291,7 +291,7 @@ func reply(ctx context.Context, conn jsonrpc2.Conn, id jsonrpc2.ID, result any, 
 	return conn.Reply(ctx, id, result)
 }
 
-func sendParseError(ctx context.Context, conn jsonrpc2.Conn, id jsonrpc2.ID, err error) error {
+func sendParseError(ctx context.Context, conn *jsonrpc2.Conn, id jsonrpc2.ID, err error) error {
 	rpcerr := &jsonrpc2.Error{
 		Code: jsonrpc2.CodeParseError,
 		Message: err.Error(),

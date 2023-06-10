@@ -39,7 +39,7 @@ type Client interface {
 	WorkspaceFolders(context.Context) ([]WorkspaceFolder, error)                               // workspace/workspaceFolders
 }
 
-func clientDispatch(ctx context.Context, client Client, conn jsonrpc2.Conn, r jsonrpc2.Request) (bool, error) {
+func clientDispatch(ctx context.Context, client Client, conn *jsonrpc2.Conn, r jsonrpc2.Request) (bool, error) {
 	switch r.Method {
 	case "$/logTrace":
 		var params LogTraceParams
