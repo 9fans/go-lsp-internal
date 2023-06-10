@@ -15,8 +15,20 @@ type clientDispatcher struct {
 	sender *jsonrpc2.Conn
 }
 
+func NewClient(conn *jsonrpc2.Conn) Client {
+	return &clientDispatcher{
+		sender: conn,
+	}
+}
+
 type serverDispatcher struct {
 	sender *jsonrpc2.Conn
+}
+
+func NewServer(conn *jsonrpc2.Conn) Server {
+	return &serverDispatcher{
+		sender: conn,
+	}
 }
 
 func reply(ctx context.Context, conn *jsonrpc2.Conn, id jsonrpc2.ID, result any, err error) error {
@@ -38,17 +50,41 @@ func sendParseError(ctx context.Context, conn *jsonrpc2.Conn, id jsonrpc2.ID, er
 	return conn.ReplyWithError(ctx, id, rpcerr)
 }
 
-type handler struct {
+type serverHandler struct {
+	server Server
+}
+
+func NewServerHandler(server Server) jsonrpc2.Handler {
+	return &serverHandler{
+		server: server,
+	}
+}
+
+func (h *serverHandler) Handle(ctx context.Context, conn *jsonrpc2.Conn, r *jsonrpc2.Request) {
+	ok, err := serverDispatch(ctx, h.server, conn, r)
+	if !ok {
+		rpcerr := &jsonrpc2.Error{
+			Code:    jsonrpc2.CodeMethodNotFound,
+			Message: "method not implemented",
+		}
+		err = conn.Reply(ctx, r.ID, rpcerr)
+	}
+	if err != nil {
+		log.Printf("rpc reply failed: %v", err)
+	}
+}
+
+type clientHandler struct {
 	client Client
 }
 
-func CreateHandler(client Client) jsonrpc2.Handler {
-	return &handler{
+func NewClientHandler(client Client) jsonrpc2.Handler {
+	return &clientHandler{
 		client: client,
 	}
 }
 
-func (h *handler) Handle(ctx context.Context, conn *jsonrpc2.Conn, r *jsonrpc2.Request) {
+func (h *clientHandler) Handle(ctx context.Context, conn *jsonrpc2.Conn, r *jsonrpc2.Request) {
 	ok, err := clientDispatch(ctx, h.client, conn, r)
 	if !ok {
 		rpcerr := &jsonrpc2.Error{
