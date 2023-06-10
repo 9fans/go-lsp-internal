@@ -98,7 +98,7 @@ func writeclient() {
 	"context"
 	"encoding/json"
 
-	"golang.org/x/tools/internal/jsonrpc2"
+	"github.com/sourcegraph/jsonrpc2"
 )
 `)
 	out.WriteString("type Client interface {\n")
@@ -106,8 +106,8 @@ func writeclient() {
 		out.WriteString(cdecls[k])
 	}
 	out.WriteString("}\n\n")
-	out.WriteString("func clientDispatch(ctx context.Context, client Client, reply jsonrpc2.Replier, r jsonrpc2.Request) (bool, error) {\n")
-	out.WriteString("\tswitch r.Method() {\n")
+	out.WriteString("func clientDispatch(ctx context.Context, client Client, conn jsonrpc2.Conn, r jsonrpc2.Request) (bool, error) {\n")
+	out.WriteString("\tswitch r.Method {\n")
 	for _, k := range ccases.keys() {
 		out.WriteString(ccases[k])
 	}
@@ -135,7 +135,7 @@ func writeserver() {
 	"context"
 	"encoding/json"
 
-	"golang.org/x/tools/internal/jsonrpc2"
+	"github.com/sourcegraph/jsonrpc2"
 )
 `)
 	out.WriteString("type Server interface {\n")
@@ -145,8 +145,8 @@ func writeserver() {
 	out.WriteString(`	NonstandardRequest(ctx context.Context, method string, params interface{}) (interface{}, error)
 }
 
-func serverDispatch(ctx context.Context, server Server, reply jsonrpc2.Replier, r jsonrpc2.Request) (bool, error) {
-	switch r.Method() {
+func serverDispatch(ctx context.Context, server Server, reply jsonrpc2.Handler, r jsonrpc2.Request) (bool, error) {
+	switch r.Method {
 `)
 	for _, k := range scases.keys() {
 		out.WriteString(scases[k])

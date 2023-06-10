@@ -14,7 +14,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"golang.org/x/tools/internal/jsonrpc2"
+	"github.com/sourcegraph/jsonrpc2"
 )
 
 type Client interface {
@@ -39,132 +39,132 @@ type Client interface {
 	WorkspaceFolders(context.Context) ([]WorkspaceFolder, error)                               // workspace/workspaceFolders
 }
 
-func clientDispatch(ctx context.Context, client Client, reply jsonrpc2.Replier, r jsonrpc2.Request) (bool, error) {
-	switch r.Method() {
+func clientDispatch(ctx context.Context, client Client, conn jsonrpc2.Conn, r jsonrpc2.Request) (bool, error) {
+	switch r.Method {
 	case "$/logTrace":
 		var params LogTraceParams
-		if err := json.Unmarshal(r.Params(), &params); err != nil {
-			return true, sendParseError(ctx, reply, err)
+		if err := json.Unmarshal(*r.Params, &params); err != nil {
+			return true, sendParseError(ctx, conn, r.ID, err)
 		}
 		err := client.LogTrace(ctx, &params)
-		return true, reply(ctx, nil, err)
+		return true, reply(ctx, conn, r.ID, nil, err)
 	case "$/progress":
 		var params ProgressParams
-		if err := json.Unmarshal(r.Params(), &params); err != nil {
-			return true, sendParseError(ctx, reply, err)
+		if err := json.Unmarshal(*r.Params, &params); err != nil {
+			return true, sendParseError(ctx, conn, r.ID, err)
 		}
 		err := client.Progress(ctx, &params)
-		return true, reply(ctx, nil, err)
+		return true, reply(ctx, conn, r.ID, nil, err)
 	case "client/registerCapability":
 		var params RegistrationParams
-		if err := json.Unmarshal(r.Params(), &params); err != nil {
-			return true, sendParseError(ctx, reply, err)
+		if err := json.Unmarshal(*r.Params, &params); err != nil {
+			return true, sendParseError(ctx, conn, r.ID, err)
 		}
 		err := client.RegisterCapability(ctx, &params)
-		return true, reply(ctx, nil, err)
+		return true, reply(ctx, conn, r.ID, nil, err)
 	case "client/unregisterCapability":
 		var params UnregistrationParams
-		if err := json.Unmarshal(r.Params(), &params); err != nil {
-			return true, sendParseError(ctx, reply, err)
+		if err := json.Unmarshal(*r.Params, &params); err != nil {
+			return true, sendParseError(ctx, conn, r.ID, err)
 		}
 		err := client.UnregisterCapability(ctx, &params)
-		return true, reply(ctx, nil, err)
+		return true, reply(ctx, conn, r.ID, nil, err)
 	case "telemetry/event":
 		var params interface{}
-		if err := json.Unmarshal(r.Params(), &params); err != nil {
-			return true, sendParseError(ctx, reply, err)
+		if err := json.Unmarshal(*r.Params, &params); err != nil {
+			return true, sendParseError(ctx, conn, r.ID, err)
 		}
 		err := client.Event(ctx, &params)
-		return true, reply(ctx, nil, err)
+		return true, reply(ctx, conn, r.ID, nil, err)
 	case "textDocument/publishDiagnostics":
 		var params PublishDiagnosticsParams
-		if err := json.Unmarshal(r.Params(), &params); err != nil {
-			return true, sendParseError(ctx, reply, err)
+		if err := json.Unmarshal(*r.Params, &params); err != nil {
+			return true, sendParseError(ctx, conn, r.ID, err)
 		}
 		err := client.PublishDiagnostics(ctx, &params)
-		return true, reply(ctx, nil, err)
+		return true, reply(ctx, conn, r.ID, nil, err)
 	case "window/logMessage":
 		var params LogMessageParams
-		if err := json.Unmarshal(r.Params(), &params); err != nil {
-			return true, sendParseError(ctx, reply, err)
+		if err := json.Unmarshal(*r.Params, &params); err != nil {
+			return true, sendParseError(ctx, conn, r.ID, err)
 		}
 		err := client.LogMessage(ctx, &params)
-		return true, reply(ctx, nil, err)
+		return true, reply(ctx, conn, r.ID, nil, err)
 	case "window/showDocument":
 		var params ShowDocumentParams
-		if err := json.Unmarshal(r.Params(), &params); err != nil {
-			return true, sendParseError(ctx, reply, err)
+		if err := json.Unmarshal(*r.Params, &params); err != nil {
+			return true, sendParseError(ctx, conn, r.ID, err)
 		}
 		resp, err := client.ShowDocument(ctx, &params)
 		if err != nil {
-			return true, reply(ctx, nil, err)
+			return true, reply(ctx, conn, r.ID, nil, err)
 		}
-		return true, reply(ctx, resp, nil)
+		return true, reply(ctx, conn, r.ID, resp, nil)
 	case "window/showMessage":
 		var params ShowMessageParams
-		if err := json.Unmarshal(r.Params(), &params); err != nil {
-			return true, sendParseError(ctx, reply, err)
+		if err := json.Unmarshal(*r.Params, &params); err != nil {
+			return true, sendParseError(ctx, conn, r.ID, err)
 		}
 		err := client.ShowMessage(ctx, &params)
-		return true, reply(ctx, nil, err)
+		return true, reply(ctx, conn, r.ID, nil, err)
 	case "window/showMessageRequest":
 		var params ShowMessageRequestParams
-		if err := json.Unmarshal(r.Params(), &params); err != nil {
-			return true, sendParseError(ctx, reply, err)
+		if err := json.Unmarshal(*r.Params, &params); err != nil {
+			return true, sendParseError(ctx, conn, r.ID, err)
 		}
 		resp, err := client.ShowMessageRequest(ctx, &params)
 		if err != nil {
-			return true, reply(ctx, nil, err)
+			return true, reply(ctx, conn, r.ID, nil, err)
 		}
-		return true, reply(ctx, resp, nil)
+		return true, reply(ctx, conn, r.ID, resp, nil)
 	case "window/workDoneProgress/create":
 		var params WorkDoneProgressCreateParams
-		if err := json.Unmarshal(r.Params(), &params); err != nil {
-			return true, sendParseError(ctx, reply, err)
+		if err := json.Unmarshal(*r.Params, &params); err != nil {
+			return true, sendParseError(ctx, conn, r.ID, err)
 		}
 		err := client.WorkDoneProgressCreate(ctx, &params)
-		return true, reply(ctx, nil, err)
+		return true, reply(ctx, conn, r.ID, nil, err)
 	case "workspace/applyEdit":
 		var params ApplyWorkspaceEditParams
-		if err := json.Unmarshal(r.Params(), &params); err != nil {
-			return true, sendParseError(ctx, reply, err)
+		if err := json.Unmarshal(*r.Params, &params); err != nil {
+			return true, sendParseError(ctx, conn, r.ID, err)
 		}
 		resp, err := client.ApplyEdit(ctx, &params)
 		if err != nil {
-			return true, reply(ctx, nil, err)
+			return true, reply(ctx, conn, r.ID, nil, err)
 		}
-		return true, reply(ctx, resp, nil)
+		return true, reply(ctx, conn, r.ID, resp, nil)
 	case "workspace/codeLens/refresh":
 		err := client.CodeLensRefresh(ctx)
-		return true, reply(ctx, nil, err)
+		return true, reply(ctx, conn, r.ID, nil, err)
 	case "workspace/configuration":
 		var params ParamConfiguration
-		if err := json.Unmarshal(r.Params(), &params); err != nil {
-			return true, sendParseError(ctx, reply, err)
+		if err := json.Unmarshal(*r.Params, &params); err != nil {
+			return true, sendParseError(ctx, conn, r.ID, err)
 		}
 		resp, err := client.Configuration(ctx, &params)
 		if err != nil {
-			return true, reply(ctx, nil, err)
+			return true, reply(ctx, conn, r.ID, nil, err)
 		}
-		return true, reply(ctx, resp, nil)
+		return true, reply(ctx, conn, r.ID, resp, nil)
 	case "workspace/diagnostic/refresh":
 		err := client.DiagnosticRefresh(ctx)
-		return true, reply(ctx, nil, err)
+		return true, reply(ctx, conn, r.ID, nil, err)
 	case "workspace/inlayHint/refresh":
 		err := client.InlayHintRefresh(ctx)
-		return true, reply(ctx, nil, err)
+		return true, reply(ctx, conn, r.ID, nil, err)
 	case "workspace/inlineValue/refresh":
 		err := client.InlineValueRefresh(ctx)
-		return true, reply(ctx, nil, err)
+		return true, reply(ctx, conn, r.ID, nil, err)
 	case "workspace/semanticTokens/refresh":
 		err := client.SemanticTokensRefresh(ctx)
-		return true, reply(ctx, nil, err)
+		return true, reply(ctx, conn, r.ID, nil, err)
 	case "workspace/workspaceFolders":
 		resp, err := client.WorkspaceFolders(ctx)
 		if err != nil {
-			return true, reply(ctx, nil, err)
+			return true, reply(ctx, conn, r.ID, nil, err)
 		}
-		return true, reply(ctx, resp, nil)
+		return true, reply(ctx, conn, r.ID, resp, nil)
 	default:
 		return false, nil
 	}

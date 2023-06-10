@@ -101,19 +101,19 @@ func genCase(method string, param, result *Type, dir string) {
 			nm = "ParamConfiguration" // gopls compatibility
 		}
 		fmt.Fprintf(out, "\t\tvar params %s\n", nm)
-		fmt.Fprintf(out, "\t\tif err := json.Unmarshal(r.Params(), &params); err != nil {\n")
-		fmt.Fprintf(out, "\t\t\treturn true, sendParseError(ctx, reply, err)\n\t\t}\n")
+		fmt.Fprintf(out, "\t\tif err := json.Unmarshal(*r.Params, &params); err != nil {\n")
+		fmt.Fprintf(out, "\t\t\treturn true, sendParseError(ctx, conn, r.ID, err)\n\t\t}\n")
 		p = ", &params"
 	}
 	if notNil(result) {
 		fmt.Fprintf(out, "\t\tresp, err := %%s.%s(ctx%s)\n", fname, p)
 		out.WriteString("\t\tif err != nil {\n")
-		out.WriteString("\t\t\treturn true, reply(ctx, nil, err)\n")
+		out.WriteString("\t\t\treturn true, reply(ctx, conn, r.ID, nil, err)\n")
 		out.WriteString("\t\t}\n")
-		out.WriteString("\t\treturn true, reply(ctx, resp, nil)\n")
+		out.WriteString("\t\treturn true, reply(ctx, conn, r.ID, resp, nil)\n")
 	} else {
 		fmt.Fprintf(out, "\t\terr := %%s.%s(ctx%s)\n", fname, p)
-		out.WriteString("\t\treturn true, reply(ctx, nil, err)\n")
+		out.WriteString("\t\treturn true, reply(ctx, conn, r.ID, nil, err)\n")
 	}
 	msg := out.String()
 	switch dir {
