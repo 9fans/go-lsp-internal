@@ -44,7 +44,7 @@ func run() error {
 		writer,
 	}
 	steam := jsonrpc2.NewBufferedStream(rwc, jsonrpc2.VSCodeObjectCodec{})
-	handler := protocol.NewClientHandler(&clientHandler{})
+	handler := protocol.NewClientHandler(&clientHandler{}, nil)
 	logger := &connLogger{}
 	conn := jsonrpc2.NewConn(context.Background(), steam, handler, jsonrpc2.LogMessages(logger))
 	server := protocol.NewServer(conn)

@@ -6,7 +6,6 @@ package protocol
 
 import (
 	"context"
-	"log"
 
 	"github.com/sourcegraph/jsonrpc2"
 )
@@ -51,12 +50,14 @@ func sendParseError(ctx context.Context, conn *jsonrpc2.Conn, id jsonrpc2.ID, er
 }
 
 type serverHandler struct {
-	server Server
+	server     Server
+	errHandler func(error, *jsonrpc2.Request)
 }
 
-func NewServerHandler(server Server) jsonrpc2.Handler {
+func NewServerHandler(server Server, errHandler func(error, *jsonrpc2.Request)) jsonrpc2.Handler {
 	return &serverHandler{
-		server: server,
+		server:     server,
+		errHandler: errHandler,
 	}
 }
 
@@ -69,18 +70,20 @@ func (h *serverHandler) Handle(ctx context.Context, conn *jsonrpc2.Conn, r *json
 		}
 		err = conn.Reply(ctx, r.ID, rpcerr)
 	}
-	if err != nil {
-		log.Printf("rpc reply failed: %v", err)
+	if h.errHandler != nil {
+		h.errHandler(err, r)
 	}
 }
 
 type clientHandler struct {
-	client Client
+	client     Client
+	errHandler func(error, *jsonrpc2.Request)
 }
 
-func NewClientHandler(client Client) jsonrpc2.Handler {
+func NewClientHandler(client Client, errHandler func(error, *jsonrpc2.Request)) jsonrpc2.Handler {
 	return &clientHandler{
-		client: client,
+		client:     client,
+		errHandler: errHandler,
 	}
 }
 
@@ -93,7 +96,7 @@ func (h *clientHandler) Handle(ctx context.Context, conn *jsonrpc2.Conn, r *json
 		}
 		err = conn.Reply(ctx, r.ID, rpcerr)
 	}
-	if err != nil {
-		log.Printf("rpc reply failed: %v", err)
+	if h.errHandler != nil {
+		h.errHandler(err, r)
 	}
 }
