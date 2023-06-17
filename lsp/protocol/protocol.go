@@ -62,7 +62,7 @@ func NewServerHandler(server Server, errHandler func(error, *jsonrpc2.Request)) 
 }
 
 func (h *serverHandler) Handle(ctx context.Context, conn *jsonrpc2.Conn, r *jsonrpc2.Request) {
-	ok, err := serverDispatch(ctx, h.server, conn, r)
+	ok, err := ServerDispatch(ctx, h.server, conn, r)
 	if !ok {
 		rpcerr := &jsonrpc2.Error{
 			Code:    jsonrpc2.CodeMethodNotFound,
@@ -88,7 +88,7 @@ func NewClientHandler(client Client, errHandler func(error, *jsonrpc2.Request)) 
 }
 
 func (h *clientHandler) Handle(ctx context.Context, conn *jsonrpc2.Conn, r *jsonrpc2.Request) {
-	ok, err := clientDispatch(ctx, h.client, conn, r)
+	ok, err := ClientDispatch(ctx, h.client, conn, r)
 	if !ok {
 		rpcerr := &jsonrpc2.Error{
 			Code:    jsonrpc2.CodeMethodNotFound,

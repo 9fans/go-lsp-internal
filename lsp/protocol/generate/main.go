@@ -106,7 +106,7 @@ func writeclient() {
 		out.WriteString(cdecls[k])
 	}
 	out.WriteString("}\n\n")
-	out.WriteString("func clientDispatch(ctx context.Context, client Client, conn *jsonrpc2.Conn, r *jsonrpc2.Request) (bool, error) {\n")
+	out.WriteString("func ClientDispatch(ctx context.Context, client Client, conn *jsonrpc2.Conn, r *jsonrpc2.Request) (bool, error) {\n")
 	out.WriteString("\tswitch r.Method {\n")
 	for _, k := range ccases.keys() {
 		out.WriteString(ccases[k])
@@ -145,7 +145,7 @@ func writeserver() {
 	out.WriteString(`	NonstandardRequest(ctx context.Context, method string, params interface{}) (interface{}, error)
 }
 
-func serverDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *jsonrpc2.Request) (bool, error) {
+func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *jsonrpc2.Request) (bool, error) {
 	switch r.Method {
 `)
 	for _, k := range scases.keys() {

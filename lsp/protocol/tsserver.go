@@ -92,7 +92,7 @@ type Server interface {
 	NonstandardRequest(ctx context.Context, method string, params interface{}) (interface{}, error)
 }
 
-func serverDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *jsonrpc2.Request) (bool, error) {
+func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *jsonrpc2.Request) (bool, error) {
 	switch r.Method {
 	case "$/progress":
 		var params ProgressParams
