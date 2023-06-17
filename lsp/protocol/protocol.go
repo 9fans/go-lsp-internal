@@ -30,23 +30,31 @@ func NewServer(conn *jsonrpc2.Conn) Server {
 	}
 }
 
-func reply(ctx context.Context, conn *jsonrpc2.Conn, id jsonrpc2.ID, result any, err error) error {
+func reply(ctx context.Context, conn *jsonrpc2.Conn, r *jsonrpc2.Request, result any, err error) error {
+	if r.Notif {
+		// no response is sent on notification
+		return err
+	}
 	if err != nil {
 		rpcerr := &jsonrpc2.Error{
 			Code:    jsonrpc2.CodeInternalError,
 			Message: err.Error(),
 		}
-		return conn.ReplyWithError(ctx, id, rpcerr)
+		return conn.ReplyWithError(ctx, r.ID, rpcerr)
 	}
-	return conn.Reply(ctx, id, result)
+	return conn.Reply(ctx, r.ID, result)
 }
 
-func sendParseError(ctx context.Context, conn *jsonrpc2.Conn, id jsonrpc2.ID, err error) error {
+func sendParseError(ctx context.Context, conn *jsonrpc2.Conn, r *jsonrpc2.Request, err error) error {
+	if r.Notif {
+		// no response is sent on notification
+		return err
+	}
 	rpcerr := &jsonrpc2.Error{
 		Code:    jsonrpc2.CodeParseError,
 		Message: err.Error(),
 	}
-	return conn.ReplyWithError(ctx, id, rpcerr)
+	return conn.ReplyWithError(ctx, r.ID, rpcerr)
 }
 
 type serverHandler struct {
