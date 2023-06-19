@@ -214,7 +214,7 @@ var goplsType = map[string]string{
 	"Or_Result_workspace_symbol":                                "[]SymbolInformation",
 	"Or_TextDocumentContentChangeEvent":                         "Msg_TextDocumentContentChangeEvent",
 	"Or_TextDocumentFilter":                                     "Msg_TextDocumentFilter",
-	"Or_WorkspaceFoldersServerCapabilities_changeNotifications": "string",
+	//"Or_WorkspaceFoldersServerCapabilities_changeNotifications": "string",
 	"Or_WorkspaceSymbol_location":                               "OrPLocation_workspace_symbol",
 	"PrepareRenameResult":                                       "PrepareRename2Gn",
 	"Tuple_ParameterInformation_label_Item1":                    "UIntCommaUInt",

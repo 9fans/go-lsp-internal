@@ -1965,6 +1965,37 @@ func (t *Or_WorkspaceEdit_documentChanges_Elem) UnmarshalJSON(x []byte) error {
 	return &UnmarshalError{"unmarshal failed to match one of [CreateFile DeleteFile RenameFile TextDocumentEdit]"}
 }
 
+// from line 9947
+func (t Or_WorkspaceFoldersServerCapabilities_changeNotifications) MarshalJSON() ([]byte, error) {
+	switch x := t.Value.(type) {
+	case bool:
+		return json.Marshal(x)
+	case string:
+		return json.Marshal(x)
+	case nil:
+		return []byte("null"), nil
+	}
+	return nil, fmt.Errorf("type %T not one of [bool string]", t)
+}
+
+func (t *Or_WorkspaceFoldersServerCapabilities_changeNotifications) UnmarshalJSON(x []byte) error {
+	if string(x) == "null" {
+		t.Value = nil
+		return nil
+	}
+	var h0 bool
+	if err := json.Unmarshal(x, &h0); err == nil {
+		t.Value = h0
+		return nil
+	}
+	var h1 string
+	if err := json.Unmarshal(x, &h1); err == nil {
+		t.Value = h1
+		return nil
+	}
+	return &UnmarshalError{"unmarshal failed to match one of [bool string]"}
+}
+
 // from line 248
 func (t Or_textDocument_declaration) MarshalJSON() ([]byte, error) {
 	switch x := t.Value.(type) {
