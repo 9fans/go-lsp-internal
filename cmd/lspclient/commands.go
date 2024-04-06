@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/fhs/go-lsp-internal/lsp/protocol"
+	"github.com/9fans/go-lsp-internal/lsp/protocol"
 )
 
 func initialize(server protocol.Server) (*protocol.ServerCapabilities, error) {
