@@ -1,4 +1,4 @@
-module github.com/fhs/go-lsp-internal
+module github.com/9fans/go-lsp-internal
 
 go 1.20
 

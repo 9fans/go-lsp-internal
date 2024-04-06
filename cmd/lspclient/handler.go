@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/fhs/go-lsp-internal/lsp/protocol"
+	"github.com/9fans/go-lsp-internal/lsp/protocol"
 )
 
 type clientHandler struct{}
