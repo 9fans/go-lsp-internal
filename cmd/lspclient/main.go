@@ -8,7 +8,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/9fans/go-lsp-internal/lsp/protocol"
+	"9fans.net/internal/go-lsp/lsp/protocol"
 	"github.com/sourcegraph/jsonrpc2"
 )
 

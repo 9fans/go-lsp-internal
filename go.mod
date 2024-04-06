@@ -1,4 +1,4 @@
-module github.com/9fans/go-lsp-internal
+module 9fans.net/internal/go-lsp
 
 go 1.20
 
