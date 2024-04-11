@@ -6,8 +6,8 @@
 
 package protocol
 
-// Code generated from protocol/metaModel.json at ref release/protocol/3.17.4-next.0 (hash 5c6ec4f537f304aa1ad645b5fd2bbb757fc40ed1).
-// https://github.com/microsoft/vscode-languageserver-node/blob/release/protocol/3.17.4-next.0/protocol/metaModel.json
+// Code generated from protocol/metaModel.json at ref release/protocol/3.17.6-next.1 (hash d2c907f450cb6d3baff74b31b432b90786d2c3b0).
+// https://github.com/microsoft/vscode-languageserver-node/blob/release/protocol/3.17.6-next.1/protocol/metaModel.json
 // LSP metaData.version = 3.17.0.
 
 import (
@@ -18,78 +18,80 @@ import (
 )
 
 type Server interface {
-	Progress(context.Context, *ProgressParams) error                                                       // $/progress
-	SetTrace(context.Context, *SetTraceParams) error                                                       // $/setTrace
-	IncomingCalls(context.Context, *CallHierarchyIncomingCallsParams) ([]CallHierarchyIncomingCall, error) // callHierarchy/incomingCalls
-	OutgoingCalls(context.Context, *CallHierarchyOutgoingCallsParams) ([]CallHierarchyOutgoingCall, error) // callHierarchy/outgoingCalls
-	ResolveCodeAction(context.Context, *CodeAction) (*CodeAction, error)                                   // codeAction/resolve
-	ResolveCodeLens(context.Context, *CodeLens) (*CodeLens, error)                                         // codeLens/resolve
-	ResolveCompletionItem(context.Context, *CompletionItem) (*CompletionItem, error)                       // completionItem/resolve
-	ResolveDocumentLink(context.Context, *DocumentLink) (*DocumentLink, error)                             // documentLink/resolve
-	Exit(context.Context) error                                                                            // exit
-	Initialize(context.Context, *ParamInitialize) (*InitializeResult, error)                               // initialize
-	Initialized(context.Context, *InitializedParams) error                                                 // initialized
-	Resolve(context.Context, *InlayHint) (*InlayHint, error)                                               // inlayHint/resolve
-	DidChangeNotebookDocument(context.Context, *DidChangeNotebookDocumentParams) error                     // notebookDocument/didChange
-	DidCloseNotebookDocument(context.Context, *DidCloseNotebookDocumentParams) error                       // notebookDocument/didClose
-	DidOpenNotebookDocument(context.Context, *DidOpenNotebookDocumentParams) error                         // notebookDocument/didOpen
-	DidSaveNotebookDocument(context.Context, *DidSaveNotebookDocumentParams) error                         // notebookDocument/didSave
-	Shutdown(context.Context) error                                                                        // shutdown
-	CodeAction(context.Context, *CodeActionParams) ([]CodeAction, error)                                   // textDocument/codeAction
-	CodeLens(context.Context, *CodeLensParams) ([]CodeLens, error)                                         // textDocument/codeLens
-	ColorPresentation(context.Context, *ColorPresentationParams) ([]ColorPresentation, error)              // textDocument/colorPresentation
-	Completion(context.Context, *CompletionParams) (*CompletionList, error)                                // textDocument/completion
-	Declaration(context.Context, *DeclarationParams) (*Or_textDocument_declaration, error)                 // textDocument/declaration
-	Definition(context.Context, *DefinitionParams) ([]Location, error)                                     // textDocument/definition
-	Diagnostic(context.Context, *string) (*string, error)                                                  // textDocument/diagnostic
-	DidChange(context.Context, *DidChangeTextDocumentParams) error                                         // textDocument/didChange
-	DidClose(context.Context, *DidCloseTextDocumentParams) error                                           // textDocument/didClose
-	DidOpen(context.Context, *DidOpenTextDocumentParams) error                                             // textDocument/didOpen
-	DidSave(context.Context, *DidSaveTextDocumentParams) error                                             // textDocument/didSave
-	DocumentColor(context.Context, *DocumentColorParams) ([]ColorInformation, error)                       // textDocument/documentColor
-	DocumentHighlight(context.Context, *DocumentHighlightParams) ([]DocumentHighlight, error)              // textDocument/documentHighlight
-	DocumentLink(context.Context, *DocumentLinkParams) ([]DocumentLink, error)                             // textDocument/documentLink
-	DocumentSymbol(context.Context, *DocumentSymbolParams) ([]interface{}, error)                          // textDocument/documentSymbol
-	FoldingRange(context.Context, *FoldingRangeParams) ([]FoldingRange, error)                             // textDocument/foldingRange
-	Formatting(context.Context, *DocumentFormattingParams) ([]TextEdit, error)                             // textDocument/formatting
-	Hover(context.Context, *HoverParams) (*Hover, error)                                                   // textDocument/hover
-	Implementation(context.Context, *ImplementationParams) ([]Location, error)                             // textDocument/implementation
-	InlayHint(context.Context, *InlayHintParams) ([]InlayHint, error)                                      // textDocument/inlayHint
-	InlineValue(context.Context, *InlineValueParams) ([]InlineValue, error)                                // textDocument/inlineValue
-	LinkedEditingRange(context.Context, *LinkedEditingRangeParams) (*LinkedEditingRanges, error)           // textDocument/linkedEditingRange
-	Moniker(context.Context, *MonikerParams) ([]Moniker, error)                                            // textDocument/moniker
-	OnTypeFormatting(context.Context, *DocumentOnTypeFormattingParams) ([]TextEdit, error)                 // textDocument/onTypeFormatting
-	PrepareCallHierarchy(context.Context, *CallHierarchyPrepareParams) ([]CallHierarchyItem, error)        // textDocument/prepareCallHierarchy
-	PrepareRename(context.Context, *PrepareRenameParams) (*PrepareRename2Gn, error)                        // textDocument/prepareRename
-	PrepareTypeHierarchy(context.Context, *TypeHierarchyPrepareParams) ([]TypeHierarchyItem, error)        // textDocument/prepareTypeHierarchy
-	RangeFormatting(context.Context, *DocumentRangeFormattingParams) ([]TextEdit, error)                   // textDocument/rangeFormatting
-	References(context.Context, *ReferenceParams) ([]Location, error)                                      // textDocument/references
-	Rename(context.Context, *RenameParams) (*WorkspaceEdit, error)                                         // textDocument/rename
-	SelectionRange(context.Context, *SelectionRangeParams) ([]SelectionRange, error)                       // textDocument/selectionRange
-	SemanticTokensFull(context.Context, *SemanticTokensParams) (*SemanticTokens, error)                    // textDocument/semanticTokens/full
-	SemanticTokensFullDelta(context.Context, *SemanticTokensDeltaParams) (interface{}, error)              // textDocument/semanticTokens/full/delta
-	SemanticTokensRange(context.Context, *SemanticTokensRangeParams) (*SemanticTokens, error)              // textDocument/semanticTokens/range
-	SignatureHelp(context.Context, *SignatureHelpParams) (*SignatureHelp, error)                           // textDocument/signatureHelp
-	TypeDefinition(context.Context, *TypeDefinitionParams) ([]Location, error)                             // textDocument/typeDefinition
-	WillSave(context.Context, *WillSaveTextDocumentParams) error                                           // textDocument/willSave
-	WillSaveWaitUntil(context.Context, *WillSaveTextDocumentParams) ([]TextEdit, error)                    // textDocument/willSaveWaitUntil
-	Subtypes(context.Context, *TypeHierarchySubtypesParams) ([]TypeHierarchyItem, error)                   // typeHierarchy/subtypes
-	Supertypes(context.Context, *TypeHierarchySupertypesParams) ([]TypeHierarchyItem, error)               // typeHierarchy/supertypes
-	WorkDoneProgressCancel(context.Context, *WorkDoneProgressCancelParams) error                           // window/workDoneProgress/cancel
-	DiagnosticWorkspace(context.Context, *WorkspaceDiagnosticParams) (*WorkspaceDiagnosticReport, error)   // workspace/diagnostic
-	DidChangeConfiguration(context.Context, *DidChangeConfigurationParams) error                           // workspace/didChangeConfiguration
-	DidChangeWatchedFiles(context.Context, *DidChangeWatchedFilesParams) error                             // workspace/didChangeWatchedFiles
-	DidChangeWorkspaceFolders(context.Context, *DidChangeWorkspaceFoldersParams) error                     // workspace/didChangeWorkspaceFolders
-	DidCreateFiles(context.Context, *CreateFilesParams) error                                              // workspace/didCreateFiles
-	DidDeleteFiles(context.Context, *DeleteFilesParams) error                                              // workspace/didDeleteFiles
-	DidRenameFiles(context.Context, *RenameFilesParams) error                                              // workspace/didRenameFiles
-	ExecuteCommand(context.Context, *ExecuteCommandParams) (interface{}, error)                            // workspace/executeCommand
-	Symbol(context.Context, *WorkspaceSymbolParams) ([]SymbolInformation, error)                           // workspace/symbol
-	WillCreateFiles(context.Context, *CreateFilesParams) (*WorkspaceEdit, error)                           // workspace/willCreateFiles
-	WillDeleteFiles(context.Context, *DeleteFilesParams) (*WorkspaceEdit, error)                           // workspace/willDeleteFiles
-	WillRenameFiles(context.Context, *RenameFilesParams) (*WorkspaceEdit, error)                           // workspace/willRenameFiles
-	ResolveWorkspaceSymbol(context.Context, *WorkspaceSymbol) (*WorkspaceSymbol, error)                    // workspaceSymbol/resolve
-	NonstandardRequest(ctx context.Context, method string, params interface{}) (interface{}, error)
+	Progress(context.Context, *ProgressParams) error                                                             // $/progress
+	SetTrace(context.Context, *SetTraceParams) error                                                             // $/setTrace
+	IncomingCalls(context.Context, *CallHierarchyIncomingCallsParams) ([]CallHierarchyIncomingCall, error)       // callHierarchy/incomingCalls
+	OutgoingCalls(context.Context, *CallHierarchyOutgoingCallsParams) ([]CallHierarchyOutgoingCall, error)       // callHierarchy/outgoingCalls
+	ResolveCodeAction(context.Context, *CodeAction) (*CodeAction, error)                                         // codeAction/resolve
+	ResolveCodeLens(context.Context, *CodeLens) (*CodeLens, error)                                               // codeLens/resolve
+	ResolveCompletionItem(context.Context, *CompletionItem) (*CompletionItem, error)                             // completionItem/resolve
+	ResolveDocumentLink(context.Context, *DocumentLink) (*DocumentLink, error)                                   // documentLink/resolve
+	Exit(context.Context) error                                                                                  // exit
+	Initialize(context.Context, *ParamInitialize) (*InitializeResult, error)                                     // initialize
+	Initialized(context.Context, *InitializedParams) error                                                       // initialized
+	Resolve(context.Context, *InlayHint) (*InlayHint, error)                                                     // inlayHint/resolve
+	DidChangeNotebookDocument(context.Context, *DidChangeNotebookDocumentParams) error                           // notebookDocument/didChange
+	DidCloseNotebookDocument(context.Context, *DidCloseNotebookDocumentParams) error                             // notebookDocument/didClose
+	DidOpenNotebookDocument(context.Context, *DidOpenNotebookDocumentParams) error                               // notebookDocument/didOpen
+	DidSaveNotebookDocument(context.Context, *DidSaveNotebookDocumentParams) error                               // notebookDocument/didSave
+	Shutdown(context.Context) error                                                                              // shutdown
+	CodeAction(context.Context, *CodeActionParams) ([]CodeAction, error)                                         // textDocument/codeAction
+	CodeLens(context.Context, *CodeLensParams) ([]CodeLens, error)                                               // textDocument/codeLens
+	ColorPresentation(context.Context, *ColorPresentationParams) ([]ColorPresentation, error)                    // textDocument/colorPresentation
+	Completion(context.Context, *CompletionParams) (*Or_Result_textDocument_completion, error)                   // textDocument/completion
+	Declaration(context.Context, *DeclarationParams) (*Or_textDocument_declaration, error)                       // textDocument/declaration
+	Definition(context.Context, *DefinitionParams) (*Or_Result_textDocument_definition, error)                   // textDocument/definition
+	Diagnostic(context.Context, *string) (*string, error)                                                        // textDocument/diagnostic
+	DidChange(context.Context, *DidChangeTextDocumentParams) error                                               // textDocument/didChange
+	DidClose(context.Context, *DidCloseTextDocumentParams) error                                                 // textDocument/didClose
+	DidOpen(context.Context, *DidOpenTextDocumentParams) error                                                   // textDocument/didOpen
+	DidSave(context.Context, *DidSaveTextDocumentParams) error                                                   // textDocument/didSave
+	DocumentColor(context.Context, *DocumentColorParams) ([]ColorInformation, error)                             // textDocument/documentColor
+	DocumentHighlight(context.Context, *DocumentHighlightParams) ([]DocumentHighlight, error)                    // textDocument/documentHighlight
+	DocumentLink(context.Context, *DocumentLinkParams) ([]DocumentLink, error)                                   // textDocument/documentLink
+	DocumentSymbol(context.Context, *DocumentSymbolParams) ([]interface{}, error)                                // textDocument/documentSymbol
+	FoldingRange(context.Context, *FoldingRangeParams) ([]FoldingRange, error)                                   // textDocument/foldingRange
+	Formatting(context.Context, *DocumentFormattingParams) ([]TextEdit, error)                                   // textDocument/formatting
+	Hover(context.Context, *HoverParams) (*Hover, error)                                                         // textDocument/hover
+	Implementation(context.Context, *ImplementationParams) ([]Location, error)                                   // textDocument/implementation
+	InlayHint(context.Context, *InlayHintParams) ([]InlayHint, error)                                            // textDocument/inlayHint
+	InlineCompletion(context.Context, *InlineCompletionParams) (*Or_Result_textDocument_inlineCompletion, error) // textDocument/inlineCompletion
+	InlineValue(context.Context, *InlineValueParams) ([]InlineValue, error)                                      // textDocument/inlineValue
+	LinkedEditingRange(context.Context, *LinkedEditingRangeParams) (*LinkedEditingRanges, error)                 // textDocument/linkedEditingRange
+	Moniker(context.Context, *MonikerParams) ([]Moniker, error)                                                  // textDocument/moniker
+	OnTypeFormatting(context.Context, *DocumentOnTypeFormattingParams) ([]TextEdit, error)                       // textDocument/onTypeFormatting
+	PrepareCallHierarchy(context.Context, *CallHierarchyPrepareParams) ([]CallHierarchyItem, error)              // textDocument/prepareCallHierarchy
+	PrepareRename(context.Context, *PrepareRenameParams) (*PrepareRenameResult, error)                           // textDocument/prepareRename
+	PrepareTypeHierarchy(context.Context, *TypeHierarchyPrepareParams) ([]TypeHierarchyItem, error)              // textDocument/prepareTypeHierarchy
+	RangeFormatting(context.Context, *DocumentRangeFormattingParams) ([]TextEdit, error)                         // textDocument/rangeFormatting
+	RangesFormatting(context.Context, *DocumentRangesFormattingParams) ([]TextEdit, error)                       // textDocument/rangesFormatting
+	References(context.Context, *ReferenceParams) ([]Location, error)                                            // textDocument/references
+	Rename(context.Context, *RenameParams) (*WorkspaceEdit, error)                                               // textDocument/rename
+	SelectionRange(context.Context, *SelectionRangeParams) ([]SelectionRange, error)                             // textDocument/selectionRange
+	SemanticTokensFull(context.Context, *SemanticTokensParams) (*SemanticTokens, error)                          // textDocument/semanticTokens/full
+	SemanticTokensFullDelta(context.Context, *SemanticTokensDeltaParams) (interface{}, error)                    // textDocument/semanticTokens/full/delta
+	SemanticTokensRange(context.Context, *SemanticTokensRangeParams) (*SemanticTokens, error)                    // textDocument/semanticTokens/range
+	SignatureHelp(context.Context, *SignatureHelpParams) (*SignatureHelp, error)                                 // textDocument/signatureHelp
+	TypeDefinition(context.Context, *TypeDefinitionParams) ([]Location, error)                                   // textDocument/typeDefinition
+	WillSave(context.Context, *WillSaveTextDocumentParams) error                                                 // textDocument/willSave
+	WillSaveWaitUntil(context.Context, *WillSaveTextDocumentParams) ([]TextEdit, error)                          // textDocument/willSaveWaitUntil
+	Subtypes(context.Context, *TypeHierarchySubtypesParams) ([]TypeHierarchyItem, error)                         // typeHierarchy/subtypes
+	Supertypes(context.Context, *TypeHierarchySupertypesParams) ([]TypeHierarchyItem, error)                     // typeHierarchy/supertypes
+	WorkDoneProgressCancel(context.Context, *WorkDoneProgressCancelParams) error                                 // window/workDoneProgress/cancel
+	DiagnosticWorkspace(context.Context, *WorkspaceDiagnosticParams) (*WorkspaceDiagnosticReport, error)         // workspace/diagnostic
+	DidChangeConfiguration(context.Context, *DidChangeConfigurationParams) error                                 // workspace/didChangeConfiguration
+	DidChangeWatchedFiles(context.Context, *DidChangeWatchedFilesParams) error                                   // workspace/didChangeWatchedFiles
+	DidChangeWorkspaceFolders(context.Context, *DidChangeWorkspaceFoldersParams) error                           // workspace/didChangeWorkspaceFolders
+	DidCreateFiles(context.Context, *CreateFilesParams) error                                                    // workspace/didCreateFiles
+	DidDeleteFiles(context.Context, *DeleteFilesParams) error                                                    // workspace/didDeleteFiles
+	DidRenameFiles(context.Context, *RenameFilesParams) error                                                    // workspace/didRenameFiles
+	ExecuteCommand(context.Context, *ExecuteCommandParams) (interface{}, error)                                  // workspace/executeCommand
+	Symbol(context.Context, *WorkspaceSymbolParams) ([]SymbolInformation, error)                                 // workspace/symbol
+	WillCreateFiles(context.Context, *CreateFilesParams) (*WorkspaceEdit, error)                                 // workspace/willCreateFiles
+	WillDeleteFiles(context.Context, *DeleteFilesParams) (*WorkspaceEdit, error)                                 // workspace/willDeleteFiles
+	WillRenameFiles(context.Context, *RenameFilesParams) (*WorkspaceEdit, error)                                 // workspace/willRenameFiles
+	ResolveWorkspaceSymbol(context.Context, *WorkspaceSymbol) (*WorkspaceSymbol, error)                          // workspaceSymbol/resolve
+
 }
 
 func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *jsonrpc2.Request) (bool, error) {
@@ -101,6 +103,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 		}
 		err := server.Progress(ctx, &params)
 		return true, reply(ctx, conn, r, nil, err)
+
 	case "$/setTrace":
 		var params SetTraceParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -108,6 +111,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 		}
 		err := server.SetTrace(ctx, &params)
 		return true, reply(ctx, conn, r, nil, err)
+
 	case "callHierarchy/incomingCalls":
 		var params CallHierarchyIncomingCallsParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -118,6 +122,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "callHierarchy/outgoingCalls":
 		var params CallHierarchyOutgoingCallsParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -128,6 +133,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "codeAction/resolve":
 		var params CodeAction
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -138,6 +144,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "codeLens/resolve":
 		var params CodeLens
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -148,6 +155,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "completionItem/resolve":
 		var params CompletionItem
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -158,6 +166,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "documentLink/resolve":
 		var params DocumentLink
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -168,9 +177,11 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "exit":
 		err := server.Exit(ctx)
 		return true, reply(ctx, conn, r, nil, err)
+
 	case "initialize":
 		var params ParamInitialize
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -181,6 +192,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "initialized":
 		var params InitializedParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -188,6 +200,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 		}
 		err := server.Initialized(ctx, &params)
 		return true, reply(ctx, conn, r, nil, err)
+
 	case "inlayHint/resolve":
 		var params InlayHint
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -198,6 +211,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "notebookDocument/didChange":
 		var params DidChangeNotebookDocumentParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -205,6 +219,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 		}
 		err := server.DidChangeNotebookDocument(ctx, &params)
 		return true, reply(ctx, conn, r, nil, err)
+
 	case "notebookDocument/didClose":
 		var params DidCloseNotebookDocumentParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -212,6 +227,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 		}
 		err := server.DidCloseNotebookDocument(ctx, &params)
 		return true, reply(ctx, conn, r, nil, err)
+
 	case "notebookDocument/didOpen":
 		var params DidOpenNotebookDocumentParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -219,6 +235,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 		}
 		err := server.DidOpenNotebookDocument(ctx, &params)
 		return true, reply(ctx, conn, r, nil, err)
+
 	case "notebookDocument/didSave":
 		var params DidSaveNotebookDocumentParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -226,9 +243,11 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 		}
 		err := server.DidSaveNotebookDocument(ctx, &params)
 		return true, reply(ctx, conn, r, nil, err)
+
 	case "shutdown":
 		err := server.Shutdown(ctx)
 		return true, reply(ctx, conn, r, nil, err)
+
 	case "textDocument/codeAction":
 		var params CodeActionParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -239,6 +258,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/codeLens":
 		var params CodeLensParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -249,6 +269,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/colorPresentation":
 		var params ColorPresentationParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -259,6 +280,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/completion":
 		var params CompletionParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -269,6 +291,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/declaration":
 		var params DeclarationParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -279,6 +302,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/definition":
 		var params DefinitionParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -289,6 +313,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/diagnostic":
 		var params string
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -299,6 +324,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/didChange":
 		var params DidChangeTextDocumentParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -306,6 +332,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 		}
 		err := server.DidChange(ctx, &params)
 		return true, reply(ctx, conn, r, nil, err)
+
 	case "textDocument/didClose":
 		var params DidCloseTextDocumentParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -313,6 +340,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 		}
 		err := server.DidClose(ctx, &params)
 		return true, reply(ctx, conn, r, nil, err)
+
 	case "textDocument/didOpen":
 		var params DidOpenTextDocumentParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -320,6 +348,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 		}
 		err := server.DidOpen(ctx, &params)
 		return true, reply(ctx, conn, r, nil, err)
+
 	case "textDocument/didSave":
 		var params DidSaveTextDocumentParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -327,6 +356,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 		}
 		err := server.DidSave(ctx, &params)
 		return true, reply(ctx, conn, r, nil, err)
+
 	case "textDocument/documentColor":
 		var params DocumentColorParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -337,6 +367,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/documentHighlight":
 		var params DocumentHighlightParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -347,6 +378,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/documentLink":
 		var params DocumentLinkParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -357,6 +389,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/documentSymbol":
 		var params DocumentSymbolParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -367,6 +400,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/foldingRange":
 		var params FoldingRangeParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -377,6 +411,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/formatting":
 		var params DocumentFormattingParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -387,6 +422,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/hover":
 		var params HoverParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -397,6 +433,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/implementation":
 		var params ImplementationParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -407,6 +444,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/inlayHint":
 		var params InlayHintParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -417,6 +455,18 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
+	case "textDocument/inlineCompletion":
+		var params InlineCompletionParams
+		if err := json.Unmarshal(*r.Params, &params); err != nil {
+			return true, sendParseError(ctx, conn, r, err)
+		}
+		resp, err := server.InlineCompletion(ctx, &params)
+		if err != nil {
+			return true, reply(ctx, conn, r, nil, err)
+		}
+		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/inlineValue":
 		var params InlineValueParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -427,6 +477,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/linkedEditingRange":
 		var params LinkedEditingRangeParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -437,6 +488,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/moniker":
 		var params MonikerParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -447,6 +499,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/onTypeFormatting":
 		var params DocumentOnTypeFormattingParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -457,6 +510,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/prepareCallHierarchy":
 		var params CallHierarchyPrepareParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -467,6 +521,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/prepareRename":
 		var params PrepareRenameParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -477,6 +532,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/prepareTypeHierarchy":
 		var params TypeHierarchyPrepareParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -487,6 +543,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/rangeFormatting":
 		var params DocumentRangeFormattingParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -497,6 +554,18 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
+	case "textDocument/rangesFormatting":
+		var params DocumentRangesFormattingParams
+		if err := json.Unmarshal(*r.Params, &params); err != nil {
+			return true, sendParseError(ctx, conn, r, err)
+		}
+		resp, err := server.RangesFormatting(ctx, &params)
+		if err != nil {
+			return true, reply(ctx, conn, r, nil, err)
+		}
+		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/references":
 		var params ReferenceParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -507,6 +576,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/rename":
 		var params RenameParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -517,6 +587,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/selectionRange":
 		var params SelectionRangeParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -527,6 +598,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/semanticTokens/full":
 		var params SemanticTokensParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -537,6 +609,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/semanticTokens/full/delta":
 		var params SemanticTokensDeltaParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -547,6 +620,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/semanticTokens/range":
 		var params SemanticTokensRangeParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -557,6 +631,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/signatureHelp":
 		var params SignatureHelpParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -567,6 +642,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/typeDefinition":
 		var params TypeDefinitionParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -577,6 +653,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "textDocument/willSave":
 		var params WillSaveTextDocumentParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -584,6 +661,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 		}
 		err := server.WillSave(ctx, &params)
 		return true, reply(ctx, conn, r, nil, err)
+
 	case "textDocument/willSaveWaitUntil":
 		var params WillSaveTextDocumentParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -594,6 +672,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "typeHierarchy/subtypes":
 		var params TypeHierarchySubtypesParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -604,6 +683,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "typeHierarchy/supertypes":
 		var params TypeHierarchySupertypesParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -614,6 +694,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "window/workDoneProgress/cancel":
 		var params WorkDoneProgressCancelParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -621,6 +702,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 		}
 		err := server.WorkDoneProgressCancel(ctx, &params)
 		return true, reply(ctx, conn, r, nil, err)
+
 	case "workspace/diagnostic":
 		var params WorkspaceDiagnosticParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -631,6 +713,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "workspace/didChangeConfiguration":
 		var params DidChangeConfigurationParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -638,6 +721,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 		}
 		err := server.DidChangeConfiguration(ctx, &params)
 		return true, reply(ctx, conn, r, nil, err)
+
 	case "workspace/didChangeWatchedFiles":
 		var params DidChangeWatchedFilesParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -645,6 +729,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 		}
 		err := server.DidChangeWatchedFiles(ctx, &params)
 		return true, reply(ctx, conn, r, nil, err)
+
 	case "workspace/didChangeWorkspaceFolders":
 		var params DidChangeWorkspaceFoldersParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -652,6 +737,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 		}
 		err := server.DidChangeWorkspaceFolders(ctx, &params)
 		return true, reply(ctx, conn, r, nil, err)
+
 	case "workspace/didCreateFiles":
 		var params CreateFilesParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -659,6 +745,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 		}
 		err := server.DidCreateFiles(ctx, &params)
 		return true, reply(ctx, conn, r, nil, err)
+
 	case "workspace/didDeleteFiles":
 		var params DeleteFilesParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -666,6 +753,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 		}
 		err := server.DidDeleteFiles(ctx, &params)
 		return true, reply(ctx, conn, r, nil, err)
+
 	case "workspace/didRenameFiles":
 		var params RenameFilesParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -673,6 +761,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 		}
 		err := server.DidRenameFiles(ctx, &params)
 		return true, reply(ctx, conn, r, nil, err)
+
 	case "workspace/executeCommand":
 		var params ExecuteCommandParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -683,6 +772,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "workspace/symbol":
 		var params WorkspaceSymbolParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -693,8 +783,9 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "workspace/willCreateFiles":
-		var params CreateFilesParams
+	var params CreateFilesParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
 			return true, sendParseError(ctx, conn, r, err)
 		}
@@ -703,6 +794,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "workspace/willDeleteFiles":
 		var params DeleteFilesParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -713,6 +805,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "workspace/willRenameFiles":
 		var params RenameFilesParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -723,6 +816,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	case "workspaceSymbol/resolve":
 		var params WorkspaceSymbol
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -733,6 +827,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 			return true, reply(ctx, conn, r, nil, err)
 		}
 		return true, reply(ctx, conn, r, resp, nil)
+
 	default:
 		return false, nil
 	}
@@ -842,8 +937,8 @@ func (s *serverDispatcher) ColorPresentation(ctx context.Context, params *ColorP
 	}
 	return result, nil
 }
-func (s *serverDispatcher) Completion(ctx context.Context, params *CompletionParams) (*CompletionList, error) {
-	var result *CompletionList
+func (s *serverDispatcher) Completion(ctx context.Context, params *CompletionParams) (*Or_Result_textDocument_completion, error) {
+	var result *Or_Result_textDocument_completion
 	if err := s.sender.Call(ctx, "textDocument/completion", params, &result); err != nil {
 		return nil, err
 	}
@@ -856,8 +951,8 @@ func (s *serverDispatcher) Declaration(ctx context.Context, params *DeclarationP
 	}
 	return result, nil
 }
-func (s *serverDispatcher) Definition(ctx context.Context, params *DefinitionParams) ([]Location, error) {
-	var result []Location
+func (s *serverDispatcher) Definition(ctx context.Context, params *DefinitionParams) (*Or_Result_textDocument_definition, error) {
+	var result *Or_Result_textDocument_definition
 	if err := s.sender.Call(ctx, "textDocument/definition", params, &result); err != nil {
 		return nil, err
 	}
@@ -945,6 +1040,13 @@ func (s *serverDispatcher) InlayHint(ctx context.Context, params *InlayHintParam
 	}
 	return result, nil
 }
+func (s *serverDispatcher) InlineCompletion(ctx context.Context, params *InlineCompletionParams) (*Or_Result_textDocument_inlineCompletion, error) {
+	var result *Or_Result_textDocument_inlineCompletion
+	if err := s.sender.Call(ctx, "textDocument/inlineCompletion", params, &result); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
 func (s *serverDispatcher) InlineValue(ctx context.Context, params *InlineValueParams) ([]InlineValue, error) {
 	var result []InlineValue
 	if err := s.sender.Call(ctx, "textDocument/inlineValue", params, &result); err != nil {
@@ -980,8 +1082,8 @@ func (s *serverDispatcher) PrepareCallHierarchy(ctx context.Context, params *Cal
 	}
 	return result, nil
 }
-func (s *serverDispatcher) PrepareRename(ctx context.Context, params *PrepareRenameParams) (*PrepareRename2Gn, error) {
-	var result *PrepareRename2Gn
+func (s *serverDispatcher) PrepareRename(ctx context.Context, params *PrepareRenameParams) (*PrepareRenameResult, error) {
+	var result *PrepareRenameResult
 	if err := s.sender.Call(ctx, "textDocument/prepareRename", params, &result); err != nil {
 		return nil, err
 	}
@@ -997,6 +1099,13 @@ func (s *serverDispatcher) PrepareTypeHierarchy(ctx context.Context, params *Typ
 func (s *serverDispatcher) RangeFormatting(ctx context.Context, params *DocumentRangeFormattingParams) ([]TextEdit, error) {
 	var result []TextEdit
 	if err := s.sender.Call(ctx, "textDocument/rangeFormatting", params, &result); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+func (s *serverDispatcher) RangesFormatting(ctx context.Context, params *DocumentRangesFormattingParams) ([]TextEdit, error) {
+	var result []TextEdit
+	if err := s.sender.Call(ctx, "textDocument/rangesFormatting", params, &result); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -1147,13 +1256,6 @@ func (s *serverDispatcher) WillRenameFiles(ctx context.Context, params *RenameFi
 func (s *serverDispatcher) ResolveWorkspaceSymbol(ctx context.Context, params *WorkspaceSymbol) (*WorkspaceSymbol, error) {
 	var result *WorkspaceSymbol
 	if err := s.sender.Call(ctx, "workspaceSymbol/resolve", params, &result); err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-func (s *serverDispatcher) NonstandardRequest(ctx context.Context, method string, params interface{}) (interface{}, error) {
-	var result interface{}
-	if err := s.sender.Call(ctx, method, params, &result); err != nil {
 		return nil, err
 	}
 	return result, nil
