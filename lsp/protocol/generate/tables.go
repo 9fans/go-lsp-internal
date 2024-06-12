@@ -46,7 +46,7 @@ var goplsStar = map[prop]int{
 	{"Lit_SemanticTokensClientCapabilities_requests_full_Item1", "delta"}: nothing, // A.B.C.D
 	{"Lit_SemanticTokensOptions_full_Item1", "delta"}:                     nothing, // A.B.C.
 
-	{"Lit_TextDocumentContentChangeEvent_Item0", "range"}: wantStar, // == nil test
+	{"Lit_TextDocumentContentChangeEvent_Item0", "range"}: wantOptStar, // == nil test, TS LSP checks for undefined instead of null.
 
 	{"TextDocumentClientCapabilities", "codeAction"}:          wantOpt, // A.B.C.D
 	{"TextDocumentClientCapabilities", "completion"}:          wantOpt, // A.B.C.D
