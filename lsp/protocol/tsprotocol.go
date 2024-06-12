@@ -2443,7 +2443,7 @@ type Msg_PrepareRename2Gn struct { // line 13911
 // created for Literal (Lit_TextDocumentContentChangeEvent_Item0)
 type Msg_TextDocumentContentChangeEvent struct { // line 14008
 	// The range of the document that changed.
-	Range *Range `json:"range"`
+	Range *Range `json:"range,omitempty"`
 	// The optional length of the range that got replaced.
 	//
 	// @deprecated use range instead.
