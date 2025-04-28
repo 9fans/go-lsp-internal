@@ -1817,7 +1817,7 @@ type GlobPattern = string // (alias) line 14127
 // The result of a hover request.
 type Hover struct { // line 4886
 	// The hover's content
-	Contents MarkupContent `json:"contents"`
+	Contents Or_Hover_contents `json:"contents"`
 	// An optional range inside the text document that is used to
 	// visualize the hover, e.g. by changing the background color.
 	Range Range `json:"range,omitempty"`
