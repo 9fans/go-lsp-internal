@@ -53,6 +53,7 @@ type Server interface {
 	FoldingRange(context.Context, *FoldingRangeParams) ([]FoldingRange, error)                             // textDocument/foldingRange
 	Formatting(context.Context, *DocumentFormattingParams) ([]TextEdit, error)                             // textDocument/formatting
 	Hover(context.Context, *HoverParams) (*Hover, error)                                                   // textDocument/hover
+	PlainGoal(context.Context, *PlainGoalParams) (*PlainGoal, error)                                       // $/lean/plainGoal
 	Implementation(context.Context, *ImplementationParams) ([]Location, error)                             // textDocument/implementation
 	InlayHint(context.Context, *InlayHintParams) ([]InlayHint, error)                                      // textDocument/inlayHint
 	InlineValue(context.Context, *InlineValueParams) ([]InlineValue, error)                                // textDocument/inlineValue
@@ -94,6 +95,18 @@ type Server interface {
 
 func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *jsonrpc2.Request) (bool, error) {
 	switch r.Method {
+
+	case "$/lean/plainGoal":
+		var params PlainGoalParams
+		if err := json.Unmarshal(*r.Params, &params); err != nil {
+			return true, sendParseError(ctx, conn, r, err)
+		}
+		resp, err := server.PlainGoal(ctx, &params)
+		if err != nil {
+			return true, reply(ctx, conn, r, nil, err)
+		}
+		return true, reply(ctx, conn, r, resp, nil)
+
 	case "$/progress":
 		var params ProgressParams
 		if err := json.Unmarshal(*r.Params, &params); err != nil {
@@ -736,6 +749,7 @@ func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *
 	default:
 		return false, nil
 	}
+
 }
 
 func (s *serverDispatcher) Progress(ctx context.Context, params *ProgressParams) error {
@@ -929,6 +943,16 @@ func (s *serverDispatcher) Hover(ctx context.Context, params *HoverParams) (*Hov
 	if err := s.sender.Call(ctx, "textDocument/hover", params, &result); err != nil {
 		return nil, err
 	}
+	return result, nil
+}
+
+func (s *serverDispatcher) PlainGoal(ctx context.Context, params *PlainGoalParams) (*PlainGoal, error) {
+	var result *PlainGoal
+
+	if err := s.sender.Call(ctx, "$/lean/plainGoal", params, &result); err != nil {
+		return nil, err
+	}
+
 	return result, nil
 }
 func (s *serverDispatcher) Implementation(ctx context.Context, params *ImplementationParams) ([]Location, error) {
