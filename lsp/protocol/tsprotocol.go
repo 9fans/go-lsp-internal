@@ -802,7 +802,7 @@ type DeclarationRegistrationOptions struct { // line 2514
 //
 // Servers should prefer returning `DefinitionLink` over `Definition` if supported
 // by the client.
-type Definition = Or_Definition // (alias) line 13751
+type Definition = DefinitionLink // Or_Definition // (alias) line 13751
 // Client Capabilities for a {@link DefinitionRequest}.
 type DefinitionClientCapabilities struct { // line 11534
 	// Whether definition supports dynamic registration.
