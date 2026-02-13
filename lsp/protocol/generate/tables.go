@@ -324,4 +324,5 @@ var methodNames = map[string]string{
 	"workspace/willRenameFiles":              "WillRenameFiles",
 	"workspace/workspaceFolders":             "WorkspaceFolders",
 	"workspaceSymbol/resolve":                "ResolveWorkspaceSymbol",
+	"$/lean/plainGoal":			  "PlainGoal",
 }

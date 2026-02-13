@@ -802,7 +802,7 @@ type DeclarationRegistrationOptions struct { // line 2514
 //
 // Servers should prefer returning `DefinitionLink` over `Definition` if supported
 // by the client.
-type Definition = Or_Definition // (alias) line 13751
+type Definition = DefinitionLink // Or_Definition // (alias) line 13751
 // Client Capabilities for a {@link DefinitionRequest}.
 type DefinitionClientCapabilities struct { // line 11534
 	// Whether definition supports dynamic registration.
@@ -1814,7 +1814,15 @@ type GeneralClientCapabilities struct { // line 10664
 //
 // @since 3.17.0
 type GlobPattern = string // (alias) line 14127
-// The result of a hover request.
+
+// The result of a plainGoal request.
+
+type PlainGoal struct {
+	Rendered string   `json:"rendered"`
+	Goals    []string `json:"goals"`
+}
+
+// The result of a Hover request
 type Hover struct { // line 4886
 	// The hover's content
 	Contents Or_Hover_contents `json:"contents"`
@@ -1837,6 +1845,12 @@ type HoverOptions struct { // line 8776
 
 // Parameters for a {@link HoverRequest}.
 type HoverParams struct { // line 4869
+	TextDocumentPositionParams
+	WorkDoneProgressParams
+}
+
+// Parameter for a plainGoal request (lean4 only).
+type PlainGoalParams struct {
 	TextDocumentPositionParams
 	WorkDoneProgressParams
 }
@@ -4310,6 +4324,7 @@ type TextDocumentItem struct { // line 7405
 
 // A parameter literal used in requests to pass a text document and a position inside that
 // document.
+
 type TextDocumentPositionParams struct { // line 6222
 	// The text document.
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
