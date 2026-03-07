@@ -1,0 +1,197 @@
+// Copyright 2025 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+// This file defines types for an experimental feature (golang/go#76331,
+// microsoft/language-server-protocol#1164). As an experimental feature,
+// these types are not yet included in tsprotocol.go.
+
+package protocol
+
+import "encoding/json"
+
+// FormFieldTypeString defines a text input.
+//
+// It is defined as a struct to allow for future extensibility, such as
+// adding regex validation or file URI constraints.
+type FormFieldTypeString struct {
+	// Kind must be "string".
+	Kind string `json:"kind"`
+}
+
+// FormFieldTypeDocumentURI defines an input for a file or directory URI.
+//
+// The client determines the best mechanism to collect this information from
+// the user (e.g., a graphical file picker, a text input with autocomplete, etc).
+//
+// The value returned by the client must be a valid "DocumentUri" as defined
+// in the LSP specification:
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentUri
+type FormFieldTypeDocumentURI struct {
+	// Kind must be "documentURI".
+	Kind string `json:"kind"`
+}
+
+// FormFieldTypeBool defines a boolean input.
+type FormFieldTypeBool struct {
+	// Kind must be "bool".
+	Kind string `json:"kind"`
+}
+
+// FormFieldTypeNumber defines a numeric input.
+//
+// It is defined as a struct to allow for future extensibility, such as
+// adding range constraints (min/max) or precision requirements.
+type FormFieldTypeNumber struct {
+	// Kind must be "number".
+	Kind string `json:"kind"`
+}
+
+// FormEnumEntry represents a single option in an enumeration.
+type FormEnumEntry struct {
+	// Value is the unique string identifier for this option.
+	//
+	// This is the value that will be sent back to the server in
+	// 'FormAnswers' if the user selects this option.
+	Value string `json:"value"`
+
+	// Description is the human-readable label presented to the user.
+	Description string `json:"description"`
+}
+
+// FormFieldTypeEnum defines a selection from a set of values.
+//
+// Use this type when:
+// - The number of options is small (e.g., < 20).
+// - All options are known at the time the form is created.
+type FormFieldTypeEnum struct {
+	// Kind must be "enum".
+	Kind string `json:"kind"`
+
+	// Entries is the list of allowable options.
+	Entries []FormEnumEntry `json:"entries"`
+}
+
+// FormFieldTypeLazyEnum defines a selection from a large or dynamic enum entry set.
+//
+// Use this type when:
+//  1. The dataset is too large to send efficiently in a single payload
+//     (e.g., thousands of workspace symbols, file uri or cloud resources).
+//  2. The available options depend on the user's input (e.g., semantic search).
+//  3. Generating the list is expensive and should only be done if requested.
+//
+// The client is expected to render a search interface (e.g., a combo box with
+// a text input) and query the server via 'interactive/listEnum' as the user types.
+type FormFieldTypeLazyEnum struct {
+	// Kind must be "lazyEnum".
+	Kind string `json:"kind"`
+
+	// TODO(hxjiang): consider make debounce configurable since fetching
+	// cloud resources could be expensive and slow.
+
+	// Source identifies the data source on the server.
+	//
+	// Examples: "workspace/symbol", "database/schema", "git/tags".
+	Source string `json:"source"`
+
+	// Config contains the static settings for the source.
+	// The client treats this as opaque data and echoes it back in the
+	// 'interactive/listEnum' request.
+	Config *json.RawMessage `json:"config,omitempty"`
+}
+
+// FormFieldTypeList defines a homogenous list of items.
+type FormFieldTypeList struct {
+	// Kind must be "list".
+	Kind string `json:"kind"`
+
+	// ElementType specifies the type of the items in the list.
+	// It must be one of the FormFieldType* structs (e.g., FormFieldTypeString).
+	ElementType any `json:"elementType"`
+}
+
+// FormField describes a single question in a form and its validation state.
+type FormField struct {
+	// Description is the text content of the question (the prompt) presented
+	// to the user.
+	Description string `json:"description"`
+
+	// Type specifies the data type and validation constraints for the answer.
+	//
+	// It must be one of the FormFieldType* structs. The Kind field within the
+	// struct determines the expected data type.
+	//
+	// The language client is expected to render an input appropriate for this
+	// type. If the client does not support the specified type, it should
+	// fall back to a string input.
+	Type any `json:"type"`
+
+	// Default specifies an optional initial value for the answer.
+	//
+	// If Type is FormFieldTypeEnum, this value must be present in the enum's
+	// Values slice.
+	Default any `json:"default,omitempty"`
+
+	// Error provides a validation message from the language server.
+	// If empty, the current answer is considered valid.
+	Error string `json:"error,omitempty"`
+}
+
+// InteractiveParams allow the server and client to exchange interactive
+// questions and answers during an LSP request.
+//
+// The server populates FormFields to define the schema. The server may
+// optionally populate FormAnswers to preserve previous user input; if
+// provided, the client may present these as default values.
+//
+// When the client responds, it must provide FormAnswers. The client is not
+// required to send FormFields back to the server.
+type InteractiveParams struct {
+	// FormFields defines the questions and validation errors in previous
+	// answers to the same questions.
+	//
+	// This is a server-to-client field. The language server defines these, and
+	// the client uses them to render the form.
+	//
+	// Note: This is a non-standard protocol extension. See microsoft/language-server-protocol#1164.
+	FormFields []FormField `json:"formFields,omitempty"`
+
+	// FormAnswers contains the values for the form questions.
+	//
+	// When sent by the language server, this field is optional but recommended
+	// to support editing previous values.
+	//
+	// When sent by the language client, this field is required. The slice must
+	// have the same length as FormFields (one answer per question), where the
+	// answer at index i corresponds to the field at index i.
+	//
+	// Note: This is a non-standard protocol extension. See microsoft/language-server-protocol#1164.
+	FormAnswers []any `json:"formAnswers,omitempty"`
+}
+
+// InteractiveListEnumParams defines the parameters for the
+// 'interactive/listEnum' request.
+type InteractiveListEnumParams struct {
+	// Source identifies the data source on the server.
+	//
+	// The client treats this as opaque data and echoes it back in the
+	// 'interactive/listEnum' request.
+	//
+	// Examples: "workspace/symbol", "database/schema", "git/tags".
+	Source string `json:"source"`
+
+	// Config contains the static settings for the specified source.
+	//
+	// The client treats this as opaque data and echoes it back in the
+	// 'interactive/listEnum' request.
+	Config *json.RawMessage `json:"config,omitempty"`
+
+	// A query string to filter enum entries by.
+	//
+	// The exact interpretation of this string (e.g., fuzzy matching, exact
+	// match, prefix search, or regular expression) is entirely up to the
+	// server and may vary depending on the source. This follows the similar
+	// semantics as the standard 'workspace/symbol' request. Clients may
+	// send an empty string here to request a default set of enum entries.
+	Query string `json:"query"`
+}

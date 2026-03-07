@@ -5,10 +5,17 @@
 package protocol
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 
 	"github.com/sourcegraph/jsonrpc2"
 )
+
+var ErrParse = &jsonrpc2.Error{
+	Code:    jsonrpc2.CodeParseError,
+	Message: "JSON RPC parse error",
+}
 
 type clientDispatcher struct {
 	sender *jsonrpc2.Conn
@@ -28,6 +35,16 @@ func NewServer(conn *jsonrpc2.Conn) Server {
 	return &serverDispatcher{
 		sender: conn,
 	}
+}
+
+// UnmarshalJSON unmarshals msg into the variable pointed to by
+// params. In JSONRPC, optional messages may be
+// "null", in which case it is a no-op.
+func UnmarshalJSON(msg json.RawMessage, v any) error {
+	if len(msg) == 0 || bytes.Equal(msg, []byte("null")) {
+		return nil
+	}
+	return json.Unmarshal(msg, v)
 }
 
 func reply(ctx context.Context, conn *jsonrpc2.Conn, r *jsonrpc2.Request, result any, err error) error {
@@ -70,7 +87,7 @@ func NewServerHandler(server Server, errHandler func(error, *jsonrpc2.Request)) 
 }
 
 func (h *serverHandler) Handle(ctx context.Context, conn *jsonrpc2.Conn, r *jsonrpc2.Request) {
-	ok, err := ServerDispatch(ctx, h.server, conn, r)
+	ok, err := serverDispatch(ctx, h.server, conn, r)
 	if !ok {
 		rpcerr := &jsonrpc2.Error{
 			Code:    jsonrpc2.CodeMethodNotFound,
@@ -96,7 +113,7 @@ func NewClientHandler(client Client, errHandler func(error, *jsonrpc2.Request)) 
 }
 
 func (h *clientHandler) Handle(ctx context.Context, conn *jsonrpc2.Conn, r *jsonrpc2.Request) {
-	ok, err := ClientDispatch(ctx, h.client, conn, r)
+	ok, err := clientDispatch(ctx, h.client, conn, r)
 	if !ok {
 		rpcerr := &jsonrpc2.Error{
 			Code:    jsonrpc2.CodeMethodNotFound,

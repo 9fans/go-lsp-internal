@@ -133,7 +133,7 @@ func genCase(model *Model, method string, param, result *Type, dir string) {
 		}
 		fmt.Fprintf(out, "\t\tvar params %s\n", nm)
 		out.WriteString("\t\tif err := UnmarshalJSON(raw, &params); err != nil {\n")
-		out.WriteString("\t\t\treturn nil, true, fmt.Errorf(\"%%w: %%s\", jsonrpc2.ErrParse, err)\n\t\t}\n")
+		out.WriteString("\t\t\treturn nil, true, fmt.Errorf(\"%%w: %%s\", ErrParse, err)\n\t\t}\n")
 		p = ", &params"
 
 		// Ensure consistency between Range and Position. If the client provides
