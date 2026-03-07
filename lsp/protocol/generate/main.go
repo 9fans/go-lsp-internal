@@ -155,7 +155,7 @@ func writeclient() {
 	"encoding/json"
 	"fmt"
 
-	"golang.org/x/tools/internal/jsonrpc2"
+	"github.com/sourcegraph/jsonrpc2"
 )
 `)
 	out.WriteString("type Client interface {\n")
@@ -164,16 +164,16 @@ func writeclient() {
 	}
 	out.WriteString("}\n\n")
 	out.WriteString(`
-func clientDispatch(ctx context.Context, client Client, reply jsonrpc2.Replier, r jsonrpc2.Request) (bool, error) {
-	resp, valid, err := ClientDispatchCall(ctx, client, r.Method(), r.Params())
+func clientDispatch(ctx context.Context, client Client, conn *jsonrpc2.Conn, r *jsonrpc2.Request) (bool, error) {
+	resp, valid, err := ClientDispatchCall(ctx, client, r.Method, *r.Params)
 	if !valid {
 		return false, nil
 	}
 
 	if err != nil {
-		return valid, reply(ctx, nil, err)
+		return valid, reply(ctx, conn, r, nil, err)
 	} else {
-	 	return valid, reply(ctx, resp, nil)
+		return valid, reply(ctx, conn, r, resp, nil)
 	}
 }
 
@@ -199,7 +199,7 @@ func writeserver() {
 	"encoding/json"
 	"fmt"
 
-	"golang.org/x/tools/internal/jsonrpc2"
+	"github.com/sourcegraph/jsonrpc2"
 )
 `)
 	out.WriteString("type Server interface {\n")
@@ -208,16 +208,16 @@ func writeserver() {
 	}
 	out.WriteString(`
 }
-func serverDispatch(ctx context.Context, server Server, reply jsonrpc2.Replier, r jsonrpc2.Request) (bool, error) {
-	resp, valid, err := ServerDispatchCall(ctx, server, r.Method(), r.Params())
+func serverDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *jsonrpc2.Request) (bool, error) {
+	resp, valid, err := ServerDispatchCall(ctx, server, r.Method, *r.Params)
 	if !valid {
 		return false, nil
 	}
 
 	if err != nil {
-		return valid, reply(ctx, nil, err)
+		return valid, reply(ctx, conn, r, nil, err)
 	} else {
-	 	return valid, reply(ctx, resp, nil)
+		return valid, reply(ctx, conn, r, resp, nil)
 	}
 }
 
