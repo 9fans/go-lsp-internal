@@ -2,9 +2,6 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build go1.19
-// +build go1.19
-
 package main
 
 import (
@@ -16,7 +13,7 @@ import (
 var typeNames = make(map[*Type]string)
 var genTypes []*newType
 
-func findTypeNames(model Model) {
+func findTypeNames(model *Model) {
 	for _, s := range model.Structures {
 		for _, e := range s.Extends {
 			nameType(e, nil) // all references
@@ -120,11 +117,11 @@ func nameType(t *Type, path []string) string {
 		}
 		// this code handles an "or" of stringLiterals (_InitializeParams.trace)
 		names := make(map[string]int)
-		msg := ""
+		var msg strings.Builder
 		for _, it := range t.Items {
 			if line, ok := names[typeNames[it]]; ok {
 				// duplicate component names are bad
-				msg += fmt.Sprintf("lines %d %d dup, %s for %s\n", line, it.Line, typeNames[it], nm)
+				fmt.Fprintf(&msg, "lines %d %d dup, %s for %s\n", line, it.Line, typeNames[it], nm)
 			}
 			names[typeNames[it]] = t.Line
 		}
@@ -140,7 +137,7 @@ func nameType(t *Type, path []string) string {
 			}
 			// otherwise unexpected
 			log.Printf("unexpected: single-case 'or' type has non-string key %s: %s", nm, solekey)
-			log.Fatal(msg)
+			log.Fatal(msg.String())
 		} else if len(names) == 2 {
 			// if one of the names is null, just use the other, rather than generating an "or".
 			// This removes about 40 types from the generated code. An entry in goplsStar

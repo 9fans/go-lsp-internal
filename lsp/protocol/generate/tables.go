@@ -2,19 +2,18 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build go1.19
-// +build go1.19
-
 package main
 
-// prop combines the name of a property with the name of the structure it is in.
+import "log"
+
+// prop combines the name of a property (class.field) with the name of
+// the structure it is in, using LSP field capitalization.
 type prop [2]string
 
 const (
-	nothing = iota
-	wantStar
-	wantOpt
-	wantOptStar
+	nothing     = iota
+	wantOpt     // omitempty
+	wantOptStar // omitempty, indirect
 )
 
 // goplsStar records the optionality of each field in the protocol.
@@ -22,41 +21,47 @@ const (
 // A.B.C.D means that one of B or C would change to a pointer
 // so a test or initialization would be needed
 var goplsStar = map[prop]int{
+	{"AnnotatedTextEdit", "annotationId"}:  wantOptStar,
 	{"ClientCapabilities", "textDocument"}: wantOpt, // A.B.C.D at fake/editor.go:255
-	{"ClientCapabilities", "window"}:       wantOpt, // regtest failures
-	{"ClientCapabilities", "workspace"}:    wantOpt, // regtest failures
+	{"ClientCapabilities", "window"}:       wantOpt, // test failures
+	{"ClientCapabilities", "workspace"}:    wantOpt, // test failures
 	{"CodeAction", "kind"}:                 wantOpt, // A.B.C.D
 
-	{"CodeActionClientCapabilities", "codeActionLiteralSupport"}: wantOpt, // regtest failures
+	{"CodeActionClientCapabilities", "codeActionLiteralSupport"}: wantOpt, // test failures
 
 	{"CompletionClientCapabilities", "completionItem"}: wantOpt, // A.B.C.D
 	{"CompletionClientCapabilities", "insertTextMode"}: wantOpt, // A.B.C.D
 	{"CompletionItem", "kind"}:                         wantOpt, // need temporary variables
 	{"CompletionParams", "context"}:                    wantOpt, // needs nil checks
 
-	{"Diagnostic", "severity"}:            wantOpt,     // nil checks or more careful thought
+	{"Diagnostic", "severity"}:            wantOpt,     // needs nil checks or more careful thought
 	{"DidSaveTextDocumentParams", "text"}: wantOptStar, // capabilities_test.go:112 logic
 	{"DocumentHighlight", "kind"}:         wantOpt,     // need temporary variables
-	{"Hover", "range"}:                    wantOpt,     // complex expressions
-	{"InlayHint", "kind"}:                 wantOpt,     // temporary variables
 
-	{"Lit_CompletionClientCapabilities_completionItem", "tagSupport"}:     nothing, // A.B.C.
-	{"Lit_SemanticTokensClientCapabilities_requests", "full"}:             nothing, // A.B.C.D
-	{"Lit_SemanticTokensClientCapabilities_requests", "range"}:            nothing, // A.B.C.D
-	{"Lit_SemanticTokensClientCapabilities_requests_full_Item1", "delta"}: nothing, // A.B.C.D
-	{"Lit_SemanticTokensOptions_full_Item1", "delta"}:                     nothing, // A.B.C.
+	{"FoldingRange", "startLine"}:      wantOptStar, // unset != zero (#71489)
+	{"FoldingRange", "startCharacter"}: wantOptStar, // unset != zero (#71489)
+	{"FoldingRange", "endLine"}:        wantOptStar, // unset != zero (#71489)
+	{"FoldingRange", "endCharacter"}:   wantOptStar, // unset != zero (#71489)
 
-	{"Lit_TextDocumentContentChangeEvent_Item0", "range"}: wantOptStar, // == nil test, TS LSP checks for undefined instead of null.
+	{"Hover", "range"}:    wantOpt, // complex expressions
+	{"InlayHint", "kind"}: wantOpt, // temporary variables
 
-	{"TextDocumentClientCapabilities", "codeAction"}:          wantOpt, // A.B.C.D
-	{"TextDocumentClientCapabilities", "completion"}:          wantOpt, // A.B.C.D
-	{"TextDocumentClientCapabilities", "documentSymbol"}:      wantOpt, // A.B.C.D
-	{"TextDocumentClientCapabilities", "publishDiagnostics"}:  wantOpt, //A.B.C.D
-	{"TextDocumentClientCapabilities", "semanticTokens"}:      wantOpt, // A.B.C.D
-	{"TextDocumentSyncOptions", "change"}:                     wantOpt, // &constant
-	{"WorkDoneProgressParams", "workDoneToken"}:               wantOpt, // regtest
-	{"WorkspaceClientCapabilities", "didChangeConfiguration"}: wantOpt, // A.B.C.D
-	{"WorkspaceClientCapabilities", "didChangeWatchedFiles"}:  wantOpt, // A.B.C.D
+	{"PublishDiagnosticsParams", "version"}:                   wantOpt,     // zero => missing (#73501)
+	{"SignatureHelp", "activeParameter"}:                      wantOptStar, // unset != zero
+	{"SignatureInformation", "activeParameter"}:               wantOptStar, // unset != zero
+	{"TextDocumentClientCapabilities", "codeAction"}:          wantOpt,     // A.B.C.D
+	{"TextDocumentClientCapabilities", "completion"}:          wantOpt,     // A.B.C.D
+	{"TextDocumentClientCapabilities", "documentSymbol"}:      wantOpt,     // A.B.C.D
+	{"TextDocumentClientCapabilities", "publishDiagnostics"}:  wantOpt,     // A.B.C.D
+	{"TextDocumentClientCapabilities", "semanticTokens"}:      wantOpt,     // A.B.C.D
+	{"TextDocumentContentChangePartial", "range"}:             wantOptStar, // == nil test
+	{"TextDocumentContentChangePartial", "rangeLength"}:       wantOptStar, // unset != zero
+	{"TextDocumentSyncOptions", "change"}:                     wantOpt,     // &constant
+	{"WorkDoneProgressBegin", "percentage"}:                   wantOptStar, // unset != zero
+	{"WorkDoneProgressParams", "workDoneToken"}:               wantOpt,     // test failures
+	{"WorkDoneProgressReport", "percentage"}:                  wantOptStar, // unset != zero
+	{"WorkspaceClientCapabilities", "didChangeConfiguration"}: wantOpt,     // A.B.C.D
+	{"WorkspaceClientCapabilities", "didChangeWatchedFiles"}:  wantOpt,     // A.B.C.D
 }
 
 // keep track of which entries in goplsStar are used
@@ -64,34 +69,34 @@ var usedGoplsStar = make(map[prop]bool)
 
 // For gopls compatibility, use a different, typically more restrictive, type for some fields.
 var renameProp = map[prop]string{
-	{"CancelParams", "id"}:         "interface{}",
-	{"Command", "arguments"}:       "[]json.RawMessage",
-	{"CompletionItem", "textEdit"}: "TextEdit",
-	{"Diagnostic", "code"}:         "interface{}",
-	{"Diagnostic", "data"}:         "json.RawMessage", // delay unmarshalling quickfixes
+	{"CancelParams", "id"}:   "any",
+	{"Command", "arguments"}: "[]json.RawMessage",
+	{"CodeAction", "data"}:   "json.RawMessage", // delay unmarshalling commands
+	{"Diagnostic", "code"}:   "any",
+	{"Diagnostic", "data"}:   "json.RawMessage", // delay unmarshalling quickfixes
 
-	{"DocumentDiagnosticReportPartialResult", "relatedDocuments"}: "map[DocumentURI]interface{}",
+	{"DocumentDiagnosticReportPartialResult", "relatedDocuments"}: "map[DocumentURI]any",
 
 	{"ExecuteCommandParams", "arguments"}: "[]json.RawMessage",
 	{"FoldingRange", "kind"}:              "string",
+	{"Hover", "contents"}:                 "MarkupContent",
 	{"InlayHint", "label"}:                "[]InlayHintLabelPart",
 
-	{"RelatedFullDocumentDiagnosticReport", "relatedDocuments"}:      "map[DocumentURI]interface{}",
-	{"RelatedUnchangedDocumentDiagnosticReport", "relatedDocuments"}: "map[DocumentURI]interface{}",
+	{"RelatedFullDocumentDiagnosticReport", "relatedDocuments"}:      "map[DocumentURI]any",
+	{"RelatedUnchangedDocumentDiagnosticReport", "relatedDocuments"}: "map[DocumentURI]any",
 
 	// PJW: this one is tricky.
-	{"ServerCapabilities", "codeActionProvider"}: "interface{}",
+	{"ServerCapabilities", "codeActionProvider"}: "any",
 
-	{"ServerCapabilities", "inlayHintProvider"}: "interface{}",
+	{"ServerCapabilities", "inlayHintProvider"}: "any",
 	// slightly tricky
-	{"ServerCapabilities", "renameProvider"}: "interface{}",
+	{"ServerCapabilities", "renameProvider"}: "any",
 	// slightly tricky
-	{"ServerCapabilities", "semanticTokensProvider"}: "interface{}",
+	{"ServerCapabilities", "semanticTokensProvider"}: "any",
 	// slightly tricky
-	{"ServerCapabilities", "textDocumentSync"}: "interface{}",
-	{"TextDocumentEdit", "edits"}:              "[]TextEdit",
+	{"ServerCapabilities", "textDocumentSync"}: "any",
 	{"TextDocumentSyncOptions", "save"}:        "SaveOptions",
-	{"WorkspaceEdit", "documentChanges"}:       "[]DocumentChanges",
+	{"WorkspaceEdit", "documentChanges"}:       "[]DocumentChange",
 }
 
 // which entries of renameProp were used
@@ -110,7 +115,9 @@ var disambiguate = map[string]adjust{
 	"DiagnosticSeverity":           {"Severity", ""},
 	"DocumentDiagnosticReportKind": {"Diagnostic", ""},
 	"FileOperationPatternKind":     {"", "Pattern"},
+	"InlineCompletionTriggerKind":  {"Inline", ""},
 	"InsertTextFormat":             {"", "TextFormat"},
+	"LanguageKind":                 {"Lang", ""},
 	"SemanticTokenModifiers":       {"Mod", ""},
 	"SemanticTokenTypes":           {"", "Type"},
 	"SignatureHelpTriggerKind":     {"Sig", ""},
@@ -125,109 +132,48 @@ var usedDisambiguate = make(map[string]bool)
 var goplsType = map[string]string{
 	"And_RegOpt_textDocument_colorPresentation": "WorkDoneProgressOptionsAndTextDocumentRegistrationOptions",
 	"ConfigurationParams":                       "ParamConfiguration",
-	"DocumentDiagnosticParams":                  "string",
-	"DocumentDiagnosticReport":                  "string",
 	"DocumentUri":                               "DocumentURI",
 	"InitializeParams":                          "ParamInitialize",
-	"LSPAny":                                    "interface{}",
+	"LSPAny":                                    "any",
 
-	"Lit_CodeActionClientCapabilities_codeActionLiteralSupport":                "PCodeActionLiteralSupportPCodeAction",
-	"Lit_CodeActionClientCapabilities_codeActionLiteralSupport_codeActionKind": "FCodeActionKindPCodeActionLiteralSupport",
-
-	"Lit_CodeActionClientCapabilities_resolveSupport":     "PResolveSupportPCodeAction",
-	"Lit_CodeAction_disabled":                             "PDisabledMsg_textDocument_codeAction",
-	"Lit_CompletionClientCapabilities_completionItem":     "PCompletionItemPCompletion",
-	"Lit_CompletionClientCapabilities_completionItemKind": "PCompletionItemKindPCompletion",
-
-	"Lit_CompletionClientCapabilities_completionItem_insertTextModeSupport": "FInsertTextModeSupportPCompletionItem",
-
-	"Lit_CompletionClientCapabilities_completionItem_resolveSupport": "FResolveSupportPCompletionItem",
-	"Lit_CompletionClientCapabilities_completionItem_tagSupport":     "FTagSupportPCompletionItem",
-
-	"Lit_CompletionClientCapabilities_completionList":     "PCompletionListPCompletion",
-	"Lit_CompletionList_itemDefaults":                     "PItemDefaultsMsg_textDocument_completion",
-	"Lit_CompletionList_itemDefaults_editRange_Item1":     "FEditRangePItemDefaults",
-	"Lit_CompletionOptions_completionItem":                "PCompletionItemPCompletionProvider",
-	"Lit_DocumentSymbolClientCapabilities_symbolKind":     "PSymbolKindPDocumentSymbol",
-	"Lit_DocumentSymbolClientCapabilities_tagSupport":     "PTagSupportPDocumentSymbol",
-	"Lit_FoldingRangeClientCapabilities_foldingRange":     "PFoldingRangePFoldingRange",
-	"Lit_FoldingRangeClientCapabilities_foldingRangeKind": "PFoldingRangeKindPFoldingRange",
-	"Lit_GeneralClientCapabilities_staleRequestSupport":   "PStaleRequestSupportPGeneral",
-	"Lit_InitializeResult_serverInfo":                     "PServerInfoMsg_initialize",
-	"Lit_InlayHintClientCapabilities_resolveSupport":      "PResolveSupportPInlayHint",
-	"Lit_MarkedString_Item1":                              "Msg_MarkedString",
-	"Lit_NotebookDocumentChangeEvent_cells":               "PCellsPChange",
-	"Lit_NotebookDocumentChangeEvent_cells_structure":     "FStructurePCells",
-	"Lit_NotebookDocumentFilter_Item0":                    "Msg_NotebookDocumentFilter",
-
-	"Lit_NotebookDocumentSyncOptions_notebookSelector_Elem_Item0": "PNotebookSelectorPNotebookDocumentSync",
-
-	"Lit_PrepareRenameResult_Item1": "Msg_PrepareRename2Gn",
-
-	"Lit_PublishDiagnosticsClientCapabilities_tagSupport":       "PTagSupportPPublishDiagnostics",
-	"Lit_SemanticTokensClientCapabilities_requests":             "PRequestsPSemanticTokens",
-	"Lit_SemanticTokensClientCapabilities_requests_full_Item1":  "FFullPRequests",
-	"Lit_SemanticTokensClientCapabilities_requests_range_Item1": "FRangePRequests",
-
-	"Lit_SemanticTokensOptions_full_Item1":  "PFullESemanticTokensOptions",
 	"Lit_SemanticTokensOptions_range_Item1": "PRangeESemanticTokensOptions",
-	"Lit_ServerCapabilities_workspace":      "Workspace6Gn",
 
-	"Lit_ShowMessageRequestClientCapabilities_messageActionItem": "PMessageActionItemPShowMessage",
-	"Lit_SignatureHelpClientCapabilities_signatureInformation":   "PSignatureInformationPSignatureHelp",
-
-	"Lit_SignatureHelpClientCapabilities_signatureInformation_parameterInformation": "FParameterInformationPSignatureInformation",
-
-	"Lit_TextDocumentContentChangeEvent_Item0":                    "Msg_TextDocumentContentChangeEvent",
-	"Lit_TextDocumentFilter_Item0":                                "Msg_TextDocumentFilter",
-	"Lit_TextDocumentFilter_Item1":                                "Msg_TextDocumentFilter",
-	"Lit_WorkspaceEditClientCapabilities_changeAnnotationSupport": "PChangeAnnotationSupportPWorkspaceEdit",
-	"Lit_WorkspaceSymbolClientCapabilities_resolveSupport":        "PResolveSupportPSymbol",
-	"Lit_WorkspaceSymbolClientCapabilities_symbolKind":            "PSymbolKindPSymbol",
-	"Lit_WorkspaceSymbolClientCapabilities_tagSupport":            "PTagSupportPSymbol",
-	"Lit_WorkspaceSymbol_location_Item1":                          "PLocationMsg_workspace_symbol",
-	"Lit__InitializeParams_clientInfo":                            "Msg_XInitializeParams_clientInfo",
-	"Or_CompletionList_itemDefaults_editRange":                    "OrFEditRangePItemDefaults",
 	"Or_Declaration": "[]Location",
 	"Or_DidChangeConfigurationRegistrationOptions_section": "OrPSection_workspace_didChangeConfiguration",
-	"Or_GlobPattern":                "string",
-	"Or_InlayHintLabelPart_tooltip": "OrPTooltipPLabel",
-	"Or_InlayHint_tooltip":          "OrPTooltip_textDocument_inlayHint",
-	"Or_LSPAny":                     "interface{}",
-	"Or_NotebookDocumentFilter":     "Msg_NotebookDocumentFilter",
-	"Or_NotebookDocumentSyncOptions_notebookSelector_Elem": "PNotebookSelectorPNotebookDocumentSync",
+	"Or_InlayHintLabelPart_tooltip":                        "OrPTooltipPLabel",
+	"Or_InlayHint_tooltip":                                 "OrPTooltip_textDocument_inlayHint",
+	"Or_LSPAny":                                            "any",
 
-	"Or_NotebookDocumentSyncOptions_notebookSelector_Elem_Item0_notebook": "OrFNotebookPNotebookSelector",
+	"Or_ParameterInformation_documentation":            "string",
+	"Or_ParameterInformation_label":                    "string",
+	"Or_PrepareRenameResult":                           "PrepareRenamePlaceholder",
+	"Or_ProgressToken":                                 "any",
+	"Or_Result_textDocument_completion":                "CompletionList",
+	"Or_Result_textDocument_declaration":               "Or_textDocument_declaration",
+	"Or_Result_textDocument_definition":                "[]Location",
+	"Or_Result_textDocument_documentSymbol":            "[]any",
+	"Or_Result_textDocument_implementation":            "[]Location",
+	"Or_Result_textDocument_semanticTokens_full_delta": "any",
+	"Or_Result_textDocument_typeDefinition":            "[]Location",
+	"Or_Result_workspace_symbol":                       "[]SymbolInformation",
+	"Or_TextDocumentContentChangeEvent":                "TextDocumentContentChangePartial",
+	"Or_RelativePattern_baseUri":                       "DocumentURI",
 
-	"Or_ParameterInformation_documentation":                     "string",
-	"Or_ParameterInformation_label":                             "string",
-	"Or_PrepareRenameResult":                                    "Msg_PrepareRename2Gn",
-	"Or_ProgressToken":                                          "interface{}",
-	"Or_Result_textDocument_completion":                         "CompletionList",
-	"Or_Result_textDocument_declaration":                        "Or_textDocument_declaration",
-	"Or_Result_textDocument_definition":                         "[]Location",
-	"Or_Result_textDocument_documentSymbol":                     "[]interface{}",
-	"Or_Result_textDocument_implementation":                     "[]Location",
-	"Or_Result_textDocument_semanticTokens_full_delta":          "interface{}",
-	"Or_Result_textDocument_typeDefinition":                     "[]Location",
-	"Or_Result_workspace_symbol":                                "[]SymbolInformation",
-	"Or_TextDocumentContentChangeEvent":                         "Msg_TextDocumentContentChangeEvent",
-	"Or_TextDocumentFilter":                                     "Msg_TextDocumentFilter",
-	//"Or_WorkspaceFoldersServerCapabilities_changeNotifications": "string",
+	"Or_WorkspaceFoldersServerCapabilities_changeNotifications": "string",
 	"Or_WorkspaceSymbol_location":                               "OrPLocation_workspace_symbol",
-	"PrepareRenameResult":                                       "PrepareRename2Gn",
-	"Tuple_ParameterInformation_label_Item1":                    "UIntCommaUInt",
-	"WorkspaceFoldersServerCapabilities":                        "WorkspaceFolders5Gn",
-	"[]LSPAny":                                                  "[]interface{}",
-	"[]Or_NotebookDocumentSyncOptions_notebookSelector_Elem":    "[]PNotebookSelectorPNotebookDocumentSync",
-	"[]Or_Result_textDocument_codeAction_Item0_Elem":            "[]CodeAction",
-	"[]PreviousResultId":                                        "[]PreviousResultID",
-	"[]uinteger":                                                "[]uint32",
-	"boolean":                                                   "bool",
-	"decimal":                                                   "float64",
-	"integer":                                                   "int32",
-	"map[DocumentUri][]TextEdit":                                "map[DocumentURI][]TextEdit",
-	"uinteger":                                                  "uint32",
+
+	"Tuple_ParameterInformation_label_Item1": "UIntCommaUInt",
+	"WorkspaceFoldersServerCapabilities":     "WorkspaceFolders5Gn",
+	"[]LSPAny":                               "[]any",
+
+	"[]Or_Result_textDocument_codeAction_Item0_Elem": "[]CodeAction",
+	"[]PreviousResultId":                             "[]PreviousResultID",
+	"[]uinteger":                                     "[]uint32",
+	"boolean":                                        "bool",
+	"decimal":                                        "float64",
+	"integer":                                        "int32",
+	"map[DocumentUri][]TextEdit":                     "map[DocumentURI][]TextEdit",
+	"uinteger":                                       "uint32",
 }
 
 var usedGoplsType = make(map[string]bool)
@@ -245,11 +191,13 @@ var methodNames = map[string]string{
 	"codeAction/resolve":                     "ResolveCodeAction",
 	"codeLens/resolve":                       "ResolveCodeLens",
 	"completionItem/resolve":                 "ResolveCompletionItem",
+	"command/resolve":                        "ResolveCommand",
 	"documentLink/resolve":                   "ResolveDocumentLink",
 	"exit":                                   "Exit",
 	"initialize":                             "Initialize",
 	"initialized":                            "Initialized",
 	"inlayHint/resolve":                      "Resolve",
+	"interactive/listEnum":                   "InteractiveListEnum",
 	"notebookDocument/didChange":             "DidChangeNotebookDocument",
 	"notebookDocument/didClose":              "DidCloseNotebookDocument",
 	"notebookDocument/didOpen":               "DidOpenNotebookDocument",
@@ -276,6 +224,7 @@ var methodNames = map[string]string{
 	"textDocument/hover":                     "Hover",
 	"textDocument/implementation":            "Implementation",
 	"textDocument/inlayHint":                 "InlayHint",
+	"textDocument/inlineCompletion":          "InlineCompletion",
 	"textDocument/inlineValue":               "InlineValue",
 	"textDocument/linkedEditingRange":        "LinkedEditingRange",
 	"textDocument/moniker":                   "Moniker",
@@ -285,6 +234,7 @@ var methodNames = map[string]string{
 	"textDocument/prepareTypeHierarchy":      "PrepareTypeHierarchy",
 	"textDocument/publishDiagnostics":        "PublishDiagnostics",
 	"textDocument/rangeFormatting":           "RangeFormatting",
+	"textDocument/rangesFormatting":          "RangesFormatting",
 	"textDocument/references":                "References",
 	"textDocument/rename":                    "Rename",
 	"textDocument/selectionRange":            "SelectionRange",
@@ -315,13 +265,76 @@ var methodNames = map[string]string{
 	"workspace/didDeleteFiles":               "DidDeleteFiles",
 	"workspace/didRenameFiles":               "DidRenameFiles",
 	"workspace/executeCommand":               "ExecuteCommand",
+	"workspace/foldingRange/refresh":         "FoldingRangeRefresh",
 	"workspace/inlayHint/refresh":            "InlayHintRefresh",
 	"workspace/inlineValue/refresh":          "InlineValueRefresh",
 	"workspace/semanticTokens/refresh":       "SemanticTokensRefresh",
 	"workspace/symbol":                       "Symbol",
+	"workspace/textDocumentContent":          "TextDocumentContent",
+	"workspace/textDocumentContent/refresh":  "TextDocumentContentRefresh",
 	"workspace/willCreateFiles":              "WillCreateFiles",
 	"workspace/willDeleteFiles":              "WillDeleteFiles",
 	"workspace/willRenameFiles":              "WillRenameFiles",
 	"workspace/workspaceFolders":             "WorkspaceFolders",
 	"workspaceSymbol/resolve":                "ResolveWorkspaceSymbol",
+}
+
+func methodName(method string) string {
+	ans := methodNames[method]
+	if ans == "" {
+		log.Fatalf("unknown method %q", method)
+	}
+	return ans
+}
+
+// prependMethodDocComments specifies doc comments that will be prepend to
+// an LSP method name defined in both Server and Client interface.
+var prependMethodDocComments = map[string]string{
+	"ResolveCommand": `// To support microsoft/language-server-protocol#1164, the language server
+	// need to read the form with client-supplied answers and either returns an
+	// ExecuteCommandParams with errors in the form surfacing the error to the
+	// client, or an ExecuteCommandParams with interactive properties empty (e.g
+	// formFields, formAnswers) and user information integrated in original
+	// properties.
+	//
+	// The language client may call "command/resolve" if the language server
+	// returns an ExecuteCommandParams with errors or try asking the user for
+	// completing the form again.
+	// The language client may call "command/resolve" multiple times with user
+	// filled (re-filled) answers in the form until it obtains an
+	// ExecuteCommandParams with interactive properties empty (e.g. formFields,
+	// formAnswers). by then the original properties contains all information,
+	// the client can call "workspace/executeCommand" with the same param.
+	//
+	// Standard resolution (e.g., "codeAction/resolve") cannot be used here because
+	// it is often triggered eagerly (e.g., for previews), prohibiting interactive
+	// forms. "command/resolve" is introduced to handle the interactive flow
+	// strictly *after* the user has explicitly indicated intention (e.g., by
+	// clicking), making it safe for Code Actions and other refactorings.`,
+	"InteractiveListEnum": `// InteractiveListEnum is the request handler for fetching dynamic enum options.
+	//
+	// This method is called by the client when the user interacts with a
+	// FormFieldTypeLazyEnum field (e.g., typing in a combo box). The server
+	// uses the provided Action and Params to determine the context (e.g.,
+	// "search workspace symbols for interfaces") and returns a filtered list
+	// of matching entries.`,
+}
+
+// prependMethodDocComments specifies doc comments that will be prepend to
+// an LSP type's properties existing doc comments.
+var appendTypePropDocComments = map[string]map[string]string{
+	"TextDocumentPositionParams": {"position": `	//
+	// Deprecated: gopls should use [TextDocumentPositionParams.Range] instead.
+`},
+}
+
+// appendTypeProp specifies block of code (typically properties with doc comment)
+// that will be append to a struct.
+var appendTypeProp = map[string]string{
+	"ExecuteCommandParams": `
+	// Support interactive command execution.
+	//
+	// Note: This is a non-standard protocol extension. See golang/go#76331.
+	InteractiveParams
+`,
 }

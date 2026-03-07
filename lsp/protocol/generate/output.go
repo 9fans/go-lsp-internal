@@ -2,15 +2,13 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build go1.19
-// +build go1.19
-
 package main
 
 import (
 	"bytes"
 	"fmt"
 	"log"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -31,19 +29,19 @@ var (
 	jsons = make(sortedMap[string])
 )
 
-func generateOutput(model Model) {
+func generateOutput(model *Model) {
 	for _, r := range model.Requests {
-		genDecl(r.Method, r.Params, r.Result, r.Direction)
-		genCase(r.Method, r.Params, r.Result, r.Direction)
-		genFunc(r.Method, r.Params, r.Result, r.Direction, false)
+		genDecl(model, r.Method, r.Params, r.Result, r.Direction, r.Line == 0)
+		genCase(model, r.Method, r.Params, r.Result, r.Direction)
+		genFunc(model, r.Method, r.Params, r.Result, r.Direction, false)
 	}
 	for _, n := range model.Notifications {
 		if n.Method == "$/cancelRequest" {
 			continue // handled internally by jsonrpc2
 		}
-		genDecl(n.Method, n.Params, nil, n.Direction)
-		genCase(n.Method, n.Params, nil, n.Direction)
-		genFunc(n.Method, n.Params, nil, n.Direction, true)
+		genDecl(model, n.Method, n.Params, nil, n.Direction, n.Line == 0)
+		genCase(model, n.Method, n.Params, nil, n.Direction)
+		genFunc(model, n.Method, n.Params, nil, n.Direction, true)
 	}
 	genStructs(model)
 	genAliases(model)
@@ -52,8 +50,8 @@ func generateOutput(model Model) {
 	genMarshal()
 }
 
-func genDecl(method string, param, result *Type, dir string) {
-	fname := methodNames[method]
+func genDecl(model *Model, method string, param, result *Type, dir string, experiment bool) {
+	fname := methodName(method)
 	p := ""
 	if notNil(param) {
 		p = ", *" + goplsName(param)
@@ -74,7 +72,28 @@ func genDecl(method string, param, result *Type, dir string) {
 		p = ", *ParamConfiguration"
 		ret = "([]LSPAny, error)"
 	}
-	msg := fmt.Sprintf("\t%s(context.Context%s) %s // %s\n", fname, p, ret, method)
+
+	var msg string
+	{
+		var sb strings.Builder
+
+		if doc, ok := prependMethodDocComments[fname]; ok {
+			sb.WriteString(doc)
+			sb.WriteString("\n\t//\n")
+		}
+
+		if experiment {
+			sb.WriteString("\t// Note: This is a non-standard protocol extension.\n")
+		} else {
+			fragment := strings.ReplaceAll(strings.TrimPrefix(method, "$/"), "/", "_")
+			fmt.Fprintf(&sb, "\t%s", lspLink(model, fragment))
+		}
+
+		fmt.Fprintf(&sb, "\t%s(context.Context%s) %s\n", fname, p, ret)
+
+		msg = sb.String()
+	}
+
 	switch dir {
 	case "clientToServer":
 		sdecls[method] = msg
@@ -88,11 +107,23 @@ func genDecl(method string, param, result *Type, dir string) {
 	}
 }
 
-func genCase(method string, param, result *Type, dir string) {
+func genCase(model *Model, method string, param, result *Type, dir string) {
+	extends := func(x, y string) bool {
+		for _, struc := range model.Structures {
+			if struc.Name == x {
+				if contains := slices.ContainsFunc(struc.Extends, func(t *Type) bool {
+					return t.Name == y
+				}); contains {
+					return true
+				}
+			}
+		}
+		return false
+	}
 	out := new(bytes.Buffer)
 	fmt.Fprintf(out, "\tcase %q:\n", method)
 	var p string
-	fname := methodNames[method]
+	fname := methodName(method)
 	if notNil(param) {
 		nm := goplsName(param)
 		if method == "workspace/configuration" { // gopls compatibility
@@ -101,20 +132,43 @@ func genCase(method string, param, result *Type, dir string) {
 			nm = "ParamConfiguration" // gopls compatibility
 		}
 		fmt.Fprintf(out, "\t\tvar params %s\n", nm)
-		fmt.Fprintf(out, "\t\tif err := json.Unmarshal(*r.Params, &params); err != nil {\n")
-		fmt.Fprintf(out, "\t\t\treturn true, sendParseError(ctx, conn, r, err)\n\t\t}\n")
+		out.WriteString("\t\tif err := UnmarshalJSON(raw, &params); err != nil {\n")
+		out.WriteString("\t\t\treturn nil, true, fmt.Errorf(\"%%w: %%s\", jsonrpc2.ErrParse, err)\n\t\t}\n")
 		p = ", &params"
+
+		// Ensure consistency between Range and Position. If the client provides
+		// only a Position, synthesize a zero-width Range at that location.
+		//
+		// Crucially, we do not clear the Position field. Since this request may
+		// be forwarded, the downstream receiver (gopls) will re-validate that
+		// the Position lies within the Range.
+		//
+		// TODO(hxjiang): define util function
+		// func (*protocol.Position) EmptyRange() protocol.Range.
+		if extends(nm, "TextDocumentPositionParams") {
+			out.WriteString(`		if params.Range == (Range{}) {
+			params.Range = Range{
+				Start: params.Position,
+				End:   params.Position,
+			}
+		} else if !params.Range.Contains(params.Position) {
+			return nil, true, fmt.Errorf("position %%v is outside the provided range %%v.", params.Position, params.Range)
+		}
+`)
+		}
+
 	}
 	if notNil(result) {
 		fmt.Fprintf(out, "\t\tresp, err := %%s.%s(ctx%s)\n", fname, p)
 		out.WriteString("\t\tif err != nil {\n")
-		out.WriteString("\t\t\treturn true, reply(ctx, conn, r, nil, err)\n")
+		out.WriteString("\t\t\treturn nil, true, err\n")
 		out.WriteString("\t\t}\n")
-		out.WriteString("\t\treturn true, reply(ctx, conn, r, resp, nil)\n")
+		out.WriteString("\t\treturn resp, true, nil\n")
 	} else {
 		fmt.Fprintf(out, "\t\terr := %%s.%s(ctx%s)\n", fname, p)
-		out.WriteString("\t\treturn true, reply(ctx, conn, r, nil, err)\n")
+		out.WriteString("\t\treturn nil, true, err\n")
 	}
+	out.WriteString("\n")
 	msg := out.String()
 	switch dir {
 	case "clientToServer":
@@ -129,7 +183,7 @@ func genCase(method string, param, result *Type, dir string) {
 	}
 }
 
-func genFunc(method string, param, result *Type, dir string, isnotify bool) {
+func genFunc(_ *Model, method string, param, result *Type, dir string, isnotify bool) {
 	out := new(bytes.Buffer)
 	var p, r string
 	var goResult string
@@ -154,7 +208,7 @@ func genFunc(method string, param, result *Type, dir string, isnotify bool) {
 		r = "([]LSPAny, error)"
 		goResult = "[]LSPAny"
 	}
-	fname := methodNames[method]
+	fname := methodName(method)
 	fmt.Fprintf(out, "func (s *%%sDispatcher) %s(ctx context.Context%s) %s {\n",
 		fname, p, r)
 
@@ -204,7 +258,7 @@ func genFunc(method string, param, result *Type, dir string, isnotify bool) {
 	}
 }
 
-func genStructs(model Model) {
+func genStructs(model *Model) {
 	structures := make(map[string]*Structure) // for expanding Extends
 	for _, s := range model.Structures {
 		structures[s.Name] = s
@@ -217,9 +271,11 @@ func genStructs(model Model) {
 			// a weird case, and needed only so the generated code contains the old gopls code
 			nm = "DocumentDiagnosticParams"
 		}
-		fmt.Fprintf(out, "type %s struct { // line %d\n", nm, s.Line)
-		// for gpls compatibilitye, embed most extensions, but expand the rest some day
-		props := append([]NameType{}, s.Properties...)
+		fmt.Fprintf(out, "//\n")
+		out.WriteString(lspLink(model, camelCase(s.Name)))
+		fmt.Fprintf(out, "type %s struct {%s\n", nm, linex(s.Line))
+		// for gopls compatibility, embed most extensions, but expand the rest some day
+		props := slices.Clone(s.Properties)
 		if s.Name == "SymbolInformation" { // but expand this one
 			for _, ex := range s.Extends {
 				fmt.Fprintf(out, "\t// extends %s\n", ex.Name)
@@ -235,17 +291,38 @@ func genStructs(model Model) {
 		for _, ex := range s.Mixins {
 			fmt.Fprintf(out, "\t%s\n", goName(ex.Name))
 		}
+		// TODO(hxjiang): clean this up after microsoft/language-server-protocol#377
+		// is fixed and released.
+		if nm == "TextDocumentPositionParams" {
+			out.WriteString("\t// Range is an optional field representing the user's text selection in the document.\n")
+			out.WriteString("\t// If provided, the Position must be contained within this range.\n")
+			out.WriteString("\t//\n")
+			out.WriteString("\t// Note: This is a non-standard protocol extension. See microsoft/language-server-protocol#377.\n")
+			out.WriteString("\tRange Range `json:\"range\"`")
+		}
 		out.WriteString("}\n")
 		types[nm] = out.String()
 	}
+
 	// base types
-	types["DocumentURI"] = "type DocumentURI string\n"
-	types["URI"] = "type URI = string\n"
-
-	types["LSPAny"] = "type LSPAny = interface{}\n"
+	// (For URI and DocumentURI, see ../uri.go.)
+	types["LSPAny"] = "type LSPAny = any\n"
 	// A special case, the only previously existing Or type
-	types["DocumentDiagnosticReport"] = "type DocumentDiagnosticReport = Or_DocumentDiagnosticReport // (alias) line 13909\n"
+	types["DocumentDiagnosticReport"] = "type DocumentDiagnosticReport = Or_DocumentDiagnosticReport // (alias) \n"
 
+}
+
+// "FooBar" -> "fooBar"
+func camelCase(TitleCased string) string {
+	return strings.ToLower(TitleCased[:1]) + TitleCased[1:]
+}
+
+func lspLink(model *Model, fragment string) string {
+	// Derive URL version from metaData.version in JSON file.
+	parts := strings.Split(model.Version.Version, ".") // e.g. "3.17.0"
+	return fmt.Sprintf("// See https://microsoft.github.io/language-server-protocol/specifications/lsp/%s.%s/specification#%s\n",
+		parts[0], parts[1], // major.minor
+		fragment)
 }
 
 func genProps(out *bytes.Buffer, props []NameType, name string) {
@@ -259,14 +336,30 @@ func genProps(out *bytes.Buffer, props []NameType, name string) {
 			tp = newNm
 		}
 		// it's a pointer if it is optional, or for gopls compatibility
-		opt, star := propStar(name, p, tp)
-		json := fmt.Sprintf(" `json:\"%s%s\"`", p.Name, opt)
+		omit, star := propStar(name, p, tp)
+		json := fmt.Sprintf(" `json:\"%s\"`", p.Name)
+		if omit {
+			json = fmt.Sprintf(" `json:\"%s,omitempty\"`", p.Name)
+		}
 		generateDoc(out, p.Documentation)
-		fmt.Fprintf(out, "\t%s %s%s %s\n", goName(p.Name), star, tp, json)
+		if docs := appendTypePropDocComments[name]; docs != nil {
+			if doc, ok := docs[p.Name]; ok {
+				out.WriteString(doc)
+			}
+		}
+		if star {
+			fmt.Fprintf(out, "\t%s *%s %s\n", goName(p.Name), tp, json)
+		} else {
+			fmt.Fprintf(out, "\t%s %s %s\n", goName(p.Name), tp, json)
+		}
+	}
+
+	if block, ok := appendTypeProp[name]; ok {
+		out.WriteString(block)
 	}
 }
 
-func genAliases(model Model) {
+func genAliases(model *Model) {
 	for _, ta := range model.TypeAliases {
 		out := new(bytes.Buffer)
 		generateDoc(out, ta.Documentation)
@@ -275,7 +368,9 @@ func genAliases(model Model) {
 			continue // renamed the type, e.g., "DocumentDiagnosticReport", an or-type to "string"
 		}
 		tp := goplsName(ta.Type)
-		fmt.Fprintf(out, "type %s = %s // (alias) line %d\n", nm, tp, ta.Line)
+		fmt.Fprintf(out, "//\n")
+		out.WriteString(lspLink(model, camelCase(ta.Name)))
+		fmt.Fprintf(out, "type %s = %s // (alias)\n", nm, tp)
 		types[nm] = out.String()
 	}
 }
@@ -287,7 +382,7 @@ func genGenTypes() {
 		switch nt.kind {
 		case "literal":
 			fmt.Fprintf(out, "// created for Literal (%s)\n", nt.name)
-			fmt.Fprintf(out, "type %s struct { // line %d\n", nm, nt.line+1)
+			fmt.Fprintf(out, "type %s struct {%s\n", nm, linex(nt.line+1))
 			genProps(out, nt.properties, nt.name) // systematic name, not gopls name; is this a good choice?
 		case "or":
 			if !strings.HasPrefix(nm, "Or") {
@@ -302,18 +397,18 @@ func genGenTypes() {
 			}
 			sort.Strings(names)
 			fmt.Fprintf(out, "// created for Or %v\n", names)
-			fmt.Fprintf(out, "type %s struct { // line %d\n", nm, nt.line+1)
-			fmt.Fprintf(out, "\tValue interface{} `json:\"value\"`\n")
+			fmt.Fprintf(out, "type %s struct {%s\n", nm, linex(nt.line+1))
+			fmt.Fprintf(out, "\tValue any `json:\"value\"`\n")
 		case "and":
 			fmt.Fprintf(out, "// created for And\n")
-			fmt.Fprintf(out, "type %s struct { // line %d\n", nm, nt.line+1)
+			fmt.Fprintf(out, "type %s struct {%s\n", nm, linex(nt.line+1))
 			for _, x := range nt.items {
 				nm := goplsName(x)
 				fmt.Fprintf(out, "\t%s\n", nm)
 			}
 		case "tuple": // there's only this one
 			nt.name = "UIntCommaUInt"
-			fmt.Fprintf(out, "//created for Tuple\ntype %s struct { // line %d\n", nm, nt.line+1)
+			fmt.Fprintf(out, "//created for Tuple\ntype %s struct {%s\n", nm, linex(nt.line+1))
 			fmt.Fprintf(out, "\tFld0 uint32 `json:\"fld0\"`\n")
 			fmt.Fprintf(out, "\tFld1 uint32 `json:\"fld1\"`\n")
 		default:
@@ -323,13 +418,13 @@ func genGenTypes() {
 		types[nm] = out.String()
 	}
 }
-func genConsts(model Model) {
+func genConsts(model *Model) {
 	for _, e := range model.Enumerations {
 		out := new(bytes.Buffer)
 		generateDoc(out, e.Documentation)
 		tp := goplsName(e.Type)
 		nm := goName(e.Name)
-		fmt.Fprintf(out, "type %s %s // line %d\n", nm, tp, e.Line)
+		fmt.Fprintf(out, "type %s %s%s\n", nm, tp, linex(e.Line))
 		types[nm] = out.String()
 		vals := new(bytes.Buffer)
 		generateDoc(vals, e.Documentation)
@@ -351,7 +446,7 @@ func genConsts(model Model) {
 			default:
 				log.Fatalf("impossible type %T", v)
 			}
-			fmt.Fprintf(vals, "\t%s %s = %s // line %d\n", nm, e.Name, val, v.Line)
+			fmt.Fprintf(vals, "\t%s %s = %s%s\n", nm, e.Name, val, linex(v.Line))
 		}
 		consts[nm] = vals.String()
 	}
@@ -370,7 +465,6 @@ func genMarshal() {
 		}
 		sort.Strings(names)
 		var buf bytes.Buffer
-		fmt.Fprintf(&buf, "// from line %d\n", nt.line)
 		fmt.Fprintf(&buf, "func (t %s) MarshalJSON() ([]byte, error) {\n", nm)
 		buf.WriteString("\tswitch x := t.Value.(type){\n")
 		for _, nmx := range names {
@@ -391,6 +485,13 @@ func genMarshal() {
 		buf.WriteString("}\n\n")
 		jsons[nm] = buf.String()
 	}
+}
+
+func linex(n int) string {
+	if *lineNumbers {
+		return fmt.Sprintf(" // line %d", n)
+	}
+	return ""
 }
 
 func goplsName(t *Type) string {

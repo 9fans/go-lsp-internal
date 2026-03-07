@@ -2,9 +2,6 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build go1.19
-// +build go1.19
-
 package main
 
 import (
@@ -45,7 +42,7 @@ type Request struct {
 	Line                int    `json:"line"`
 }
 
-// A Notificatin is the parsed version of an LSP notification
+// A Notification is the parsed version of an LSP notification
 type Notification struct {
 	Documentation       string `json:"documentation"`
 	Direction           string `json:"messageDirection"`
@@ -115,7 +112,7 @@ type Type struct {
 	Line    int     `json:"line"`    // JSON source line
 }
 
-// ParsedLiteral is Type.Value when Type.Kind is "literal"
+// ParseLiteral is Type.Value when Type.Kind is "literal"
 type ParseLiteral struct {
 	Properties `json:"properties"`
 }
