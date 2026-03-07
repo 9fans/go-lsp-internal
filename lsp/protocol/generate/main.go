@@ -2,14 +2,13 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build go1.19
-// +build go1.19
-
 // The generate command generates Go declarations from VSCode's
 // description of the Language Server Protocol.
 //
 // To run it, type 'go generate' in the parent (protocol) directory.
 package main
+
+// see https://github.com/golang/go/issues/61217 for discussion of an issue
 
 import (
 	"bytes"
@@ -21,6 +20,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -28,17 +28,17 @@ const vscodeRepo = "https://github.com/microsoft/vscode-languageserver-node"
 
 // lspGitRef names a branch or tag in vscodeRepo.
 // It implicitly determines the protocol version of the LSP used by gopls.
-// For example, tag release/protocol/3.17.3 of the repo defines protocol version 3.17.0.
+// For example, tag release/protocol/3.17.3 of the repo defines
+// protocol version 3.17.0 (as declared by the metaData.version field).
 // (Point releases are reflected in the git tag version even when they are cosmetic
 // and don't change the protocol.)
-var lspGitRef = "release/protocol/3.17.4-next.0"
+var lspGitRef = "release/protocol/3.17.6-next.14"
 
 var (
 	repodir   = flag.String("d", "", "directory containing clone of "+vscodeRepo)
 	outputdir = flag.String("o", ".", "output directory")
 	// PJW: not for real code
-	cmpdir = flag.String("c", "", "directory of earlier code")
-	doboth = flag.String("b", "", "generate and compare")
+	lineNumbers = flag.Bool("l", false, "add line numbers to generated output")
 )
 
 func main() {
@@ -73,6 +73,62 @@ func processinline() {
 
 	model := parse(filepath.Join(*repodir, "protocol/metaModel.json"))
 
+	// Although the LSP specification defines RenameParams as extending
+	// TextDocumentPositionParams, the metaModel.json definition flattens
+	// these properties (likely due to specific comments in the TS definition).
+	// See microsoft/vscode-languageserver-node#1698.
+	//
+	// TODO(hxjiang): delete the patch logic after releasing lsp 3.18.
+	for _, s := range model.Structures {
+		if s.Name == "RenameParams" {
+			s.Properties = slices.DeleteFunc(s.Properties, func(t NameType) bool {
+				return t.Name == "position" || t.Name == "textDocument"
+			})
+			if !slices.ContainsFunc(s.Extends, func(t *Type) bool {
+				return t.Kind == "reference" && t.Name == "TextDocumentPositionParams"
+			}) {
+				s.Extends = append(s.Extends, &Type{
+					Kind: "reference",
+					Name: "TextDocumentPositionParams",
+				})
+			}
+		}
+	}
+
+	// Add a client to server LSP method "command/resolve" for interactive
+	// refactoring. The method's param and result are both "ExecuteCommandParams".
+	// The types are only accessible from the "workspace/executeCommand" request.
+	//
+	// See microsoft/language-server-protocol#1164.
+	for _, req := range model.Requests {
+		if req.Method == "workspace/executeCommand" {
+			model.Requests = append(model.Requests, &Request{
+				Method:    "command/resolve",
+				ErrorData: req.ErrorData,
+				Direction: "clientToServer",
+				Params:    req.Params,
+				Result:    req.Params,
+			})
+			break
+		}
+	}
+
+	model.Requests = append(model.Requests, &Request{
+		Method:    "interactive/listEnum",
+		Direction: "clientToServer",
+		Params: &Type{
+			Kind: "reference",
+			Name: "InteractiveListEnumParams",
+		},
+		Result: &Type{
+			Kind: "array",
+			Element: &Type{
+				Kind: "reference",
+				Name: "FormEnumEntry",
+			},
+		},
+	})
+
 	findTypeNames(model)
 	generateOutput(model)
 
@@ -97,8 +153,9 @@ func writeclient() {
 		`import (
 	"context"
 	"encoding/json"
+	"fmt"
 
-	"github.com/sourcegraph/jsonrpc2"
+	"golang.org/x/tools/internal/jsonrpc2"
 )
 `)
 	out.WriteString("type Client interface {\n")
@@ -106,25 +163,31 @@ func writeclient() {
 		out.WriteString(cdecls[k])
 	}
 	out.WriteString("}\n\n")
-	out.WriteString("func ClientDispatch(ctx context.Context, client Client, conn *jsonrpc2.Conn, r *jsonrpc2.Request) (bool, error) {\n")
-	out.WriteString("\tswitch r.Method {\n")
+	out.WriteString(`
+func clientDispatch(ctx context.Context, client Client, reply jsonrpc2.Replier, r jsonrpc2.Request) (bool, error) {
+	resp, valid, err := ClientDispatchCall(ctx, client, r.Method(), r.Params())
+	if !valid {
+		return false, nil
+	}
+
+	if err != nil {
+		return valid, reply(ctx, nil, err)
+	} else {
+	 	return valid, reply(ctx, resp, nil)
+	}
+}
+
+func ClientDispatchCall(ctx context.Context, client Client, method string, raw json.RawMessage) (resp any, _ bool, err error) {
+	switch method {
+`)
 	for _, k := range ccases.keys() {
 		out.WriteString(ccases[k])
 	}
-	out.WriteString(("\tdefault:\n\t\treturn false, nil\n\t}\n}\n\n"))
+	out.WriteString(("\tdefault:\n\t\treturn nil, false, nil\n\t}\n}\n\n"))
 	for _, k := range cfuncs.keys() {
 		out.WriteString(cfuncs[k])
 	}
-
-	x, err := format.Source(out.Bytes())
-	if err != nil {
-		os.WriteFile("/tmp/a.go", out.Bytes(), 0644)
-		log.Fatalf("tsclient.go: %v", err)
-	}
-
-	if err := os.WriteFile(filepath.Join(*outputdir, "tsclient.go"), x, 0644); err != nil {
-		log.Fatalf("%v writing tsclient.go", err)
-	}
+	formatTo("tsclient.go", out.Bytes())
 }
 
 func writeserver() {
@@ -134,45 +197,41 @@ func writeserver() {
 		`import (
 	"context"
 	"encoding/json"
+	"fmt"
 
-	"github.com/sourcegraph/jsonrpc2"
+	"golang.org/x/tools/internal/jsonrpc2"
 )
 `)
 	out.WriteString("type Server interface {\n")
 	for _, k := range sdecls.keys() {
 		out.WriteString(sdecls[k])
 	}
-	out.WriteString(`	NonstandardRequest(ctx context.Context, method string, params interface{}) (interface{}, error)
+	out.WriteString(`
+}
+func serverDispatch(ctx context.Context, server Server, reply jsonrpc2.Replier, r jsonrpc2.Request) (bool, error) {
+	resp, valid, err := ServerDispatchCall(ctx, server, r.Method(), r.Params())
+	if !valid {
+		return false, nil
+	}
+
+	if err != nil {
+		return valid, reply(ctx, nil, err)
+	} else {
+	 	return valid, reply(ctx, resp, nil)
+	}
 }
 
-func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *jsonrpc2.Request) (bool, error) {
-	switch r.Method {
+func ServerDispatchCall(ctx context.Context, server Server, method string, raw json.RawMessage) (resp any, _ bool, err error) {
+	switch method {
 `)
 	for _, k := range scases.keys() {
 		out.WriteString(scases[k])
 	}
-	out.WriteString(("\tdefault:\n\t\treturn false, nil\n\t}\n}\n\n"))
+	out.WriteString(("\tdefault:\n\t\treturn nil, false, nil\n\t}\n}\n\n"))
 	for _, k := range sfuncs.keys() {
 		out.WriteString(sfuncs[k])
 	}
-	out.WriteString(`func (s *serverDispatcher) NonstandardRequest(ctx context.Context, method string, params interface{}) (interface{}, error) {
-	var result interface{}
-	if err := s.sender.Call(ctx, method, params, &result); err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-`)
-
-	x, err := format.Source(out.Bytes())
-	if err != nil {
-		os.WriteFile("/tmp/a.go", out.Bytes(), 0644)
-		log.Fatalf("tsserver.go: %v", err)
-	}
-
-	if err := os.WriteFile(filepath.Join(*outputdir, "tsserver.go"), x, 0644); err != nil {
-		log.Fatalf("%v writing tsserver.go", err)
-	}
+	formatTo("tsserver.go", out.Bytes())
 }
 
 func writeprotocol() {
@@ -180,7 +239,7 @@ func writeprotocol() {
 	fmt.Fprintln(out, fileHdr)
 	out.WriteString("import \"encoding/json\"\n\n")
 
-	// The followiing are unneeded, but make the new code a superset of the old
+	// The following are unneeded, but make the new code a superset of the old
 	hack := func(newer, existing string) {
 		if _, ok := types[existing]; !ok {
 			log.Fatalf("types[%q] not found", existing)
@@ -192,12 +251,10 @@ func writeprotocol() {
 	hack("PreviousResultId", "PreviousResultID")
 	hack("WorkspaceFoldersServerCapabilities", "WorkspaceFolders5Gn")
 	hack("_InitializeParams", "XInitializeParams")
-	// and some aliases to make the new code contain the old
-	types["PrepareRename2Gn"] = "type PrepareRename2Gn = Msg_PrepareRename2Gn // (alias) line 13927\n"
-	types["PrepareRenameResult"] = "type PrepareRenameResult = Msg_PrepareRename2Gn // (alias) line 13927\n"
+
 	for _, k := range types.keys() {
 		if k == "WatchKind" {
-			types[k] = "type WatchKind = uint32 // line 13505" // strict gopls compatibility needs the '='
+			types[k] = "type WatchKind = uint32" // strict gopls compatibility needs the '='
 		}
 		out.WriteString(types[k])
 	}
@@ -207,14 +264,7 @@ func writeprotocol() {
 		out.WriteString(consts[k])
 	}
 	out.WriteString(")\n\n")
-	x, err := format.Source(out.Bytes())
-	if err != nil {
-		os.WriteFile("/tmp/a.go", out.Bytes(), 0644)
-		log.Fatalf("tsprotocol.go: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(*outputdir, "tsprotocol.go"), x, 0644); err != nil {
-		log.Fatalf("%v writing tsprotocol.go", err)
-	}
+	formatTo("tsprotocol.go", out.Bytes())
 }
 
 func writejsons() {
@@ -238,18 +288,26 @@ func (e UnmarshalError) Error() string {
 	for _, k := range jsons.keys() {
 		out.WriteString(jsons[k])
 	}
-	x, err := format.Source(out.Bytes())
+	formatTo("tsjson.go", out.Bytes())
+}
+
+// formatTo formats the Go source and writes it to *outputdir/basename.
+func formatTo(basename string, src []byte) {
+	formatted, err := format.Source(src)
 	if err != nil {
-		os.WriteFile("/tmp/a.go", out.Bytes(), 0644)
-		log.Fatalf("tsjson.go: %v", err)
+		failed := filepath.Join("/tmp", basename+".fail")
+		if err := os.WriteFile(failed, src, 0644); err != nil {
+			log.Fatal(err)
+		}
+		log.Fatalf("formatting %s: %v (see %s)", basename, err, failed)
 	}
-	if err := os.WriteFile(filepath.Join(*outputdir, "tsjson.go"), x, 0644); err != nil {
-		log.Fatalf("%v writing tsjson.go", err)
+	if err := os.WriteFile(filepath.Join(*outputdir, basename), formatted, 0644); err != nil {
+		log.Fatal(err)
 	}
 }
 
 // create the common file header for the output files
-func fileHeader(model Model) string {
+func fileHeader(model *Model) string {
 	fname := filepath.Join(*repodir, ".git", "HEAD")
 	buf, err := os.ReadFile(fname)
 	if err != nil {
@@ -291,14 +349,14 @@ package protocol
 		model.Version.Version)     // 5
 }
 
-func parse(fname string) Model {
+func parse(fname string) *Model {
 	buf, err := os.ReadFile(fname)
 	if err != nil {
 		log.Fatal(err)
 	}
 	buf = addLineNumbers(buf)
-	var model Model
-	if err := json.Unmarshal(buf, &model); err != nil {
+	model := new(Model)
+	if err := json.Unmarshal(buf, model); err != nil {
 		log.Fatal(err)
 	}
 	return model
