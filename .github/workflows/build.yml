@@ -1,0 +1,40 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: [ '1.25', '1.26' ]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ matrix.go-version }}
+
+    - name: Check formatting
+      run: |
+        fmt_files=$(gofmt -l .)
+        if [ -n "$fmt_files" ]; then
+          echo "Go files are not formatted:"
+          echo "$fmt_files"
+          exit 1
+        fi
+
+    - name: Build (linux)
+      run: go build -v ./...
+
+    - name: Build (windows)
+      run: GOOS=windows go build -v ./...
+
+    - name: Build (plan9)
+      run: GOOS=plan9 go build -v ./...
