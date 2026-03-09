@@ -14,7 +14,7 @@ func initialize(server protocol.Server) (*protocol.ServerCapabilities, error) {
 	if err != nil {
 		return nil, err
 	}
-	traceValues := protocol.TraceValues(protocol.Verbose)
+	traceValues := protocol.TraceValue(protocol.Verbose)
 	result, err := server.Initialize(context.Background(), &protocol.ParamInitialize{
 		XInitializeParams: protocol.XInitializeParams{
 			Trace: &traceValues,
