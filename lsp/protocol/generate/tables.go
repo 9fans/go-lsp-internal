@@ -80,7 +80,7 @@ var renameProp = map[prop]string{
 	{"ExecuteCommandParams", "arguments"}: "[]json.RawMessage",
 	{"FoldingRange", "kind"}:              "string",
 	//acme-lsp: {"Hover", "contents"}:                 "MarkupContent",
-	{"InlayHint", "label"}:                "[]InlayHintLabelPart",
+	{"InlayHint", "label"}: "[]InlayHintLabelPart",
 
 	{"RelatedFullDocumentDiagnosticReport", "relatedDocuments"}:      "map[DocumentURI]any",
 	{"RelatedUnchangedDocumentDiagnosticReport", "relatedDocuments"}: "map[DocumentURI]any",
