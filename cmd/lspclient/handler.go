@@ -122,3 +122,15 @@ func (c *clientHandler) WorkspaceFolders(context.Context) ([]protocol.WorkspaceF
 	log.Println("unimplmented")
 	return nil, nil
 }
+
+// workspace/foldingRange/refresh
+func (c *clientHandler) FoldingRangeRefresh(context.Context) error {
+	log.Println("unimplmented")
+	return nil
+}
+
+// workspace/textDocumentContent/refresh
+func (c *clientHandler) TextDocumentContentRefresh(context.Context, *protocol.TextDocumentContentRefreshParams) error {
+	log.Println("unimplmented")
+	return nil
+}
