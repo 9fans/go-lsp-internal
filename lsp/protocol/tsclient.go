@@ -63,7 +63,7 @@ type Client interface {
 	WorkspaceFolders(context.Context) ([]WorkspaceFolder, error)
 }
 
-func clientDispatch(ctx context.Context, client Client, conn *jsonrpc2.Conn, r *jsonrpc2.Request) (bool, error) {
+func ClientDispatch(ctx context.Context, client Client, conn *jsonrpc2.Conn, r *jsonrpc2.Request) (bool, error) {
 	resp, valid, err := ClientDispatchCall(ctx, client, r.Method, *r.Params)
 	if !valid {
 		return false, nil

@@ -203,7 +203,7 @@ type Server interface {
 	ResolveWorkspaceSymbol(context.Context, *WorkspaceSymbol) (*WorkspaceSymbol, error)
 }
 
-func serverDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *jsonrpc2.Request) (bool, error) {
+func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *jsonrpc2.Request) (bool, error) {
 	resp, valid, err := ServerDispatchCall(ctx, server, r.Method, *r.Params)
 	if !valid {
 		return false, nil
