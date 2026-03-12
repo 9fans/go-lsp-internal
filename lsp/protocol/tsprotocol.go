@@ -4074,6 +4074,11 @@ type Or_WorkspaceEdit_documentChanges_Elem struct {
 	Value any `json:"value"`
 }
 
+// created for Or [bool string]
+type Or_WorkspaceFoldersServerCapabilities_changeNotifications struct {
+	Value any `json:"value"`
+}
+
 // created for Or [TextDocumentContentOptions TextDocumentContentRegistrationOptions]
 type Or_WorkspaceOptions_textDocumentContent struct {
 	Value any `json:"value"`
@@ -6200,7 +6205,7 @@ type WorkspaceFolders5Gn struct {
 	// under which the notification is registered on the client
 	// side. The ID can be used to unregister for these events
 	// using the `client/unregisterCapability` request.
-	ChangeNotifications string `json:"changeNotifications,omitempty"`
+	ChangeNotifications *Or_WorkspaceFoldersServerCapabilities_changeNotifications `json:"changeNotifications,omitempty"`
 }
 
 // The workspace folder change event.
@@ -6236,7 +6241,7 @@ type WorkspaceFoldersServerCapabilities struct {
 	// under which the notification is registered on the client
 	// side. The ID can be used to unregister for these events
 	// using the `client/unregisterCapability` request.
-	ChangeNotifications string `json:"changeNotifications,omitempty"`
+	ChangeNotifications *Or_WorkspaceFoldersServerCapabilities_changeNotifications `json:"changeNotifications,omitempty"`
 }
 
 // A full document diagnostic report for a workspace diagnostic result.

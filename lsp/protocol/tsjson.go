@@ -10,10 +10,9 @@ package protocol
 // https://github.com/microsoft/vscode-languageserver-node/blob/release/protocol/3.17.6-next.14/protocol/metaModel.json
 // LSP metaData.version = 3.17.0.
 
-import (
-	"encoding/json"
-	"fmt"
-)
+import "encoding/json"
+
+import "fmt"
 
 // UnmarshalError indicates that a JSON value did not conform to
 // one of the expected cases of an LSP union type.
@@ -2105,6 +2104,36 @@ func (t *Or_WorkspaceEdit_documentChanges_Elem) UnmarshalJSON(x []byte) error {
 		return nil
 	}
 	return &UnmarshalError{"unmarshal failed to match one of [CreateFile DeleteFile RenameFile TextDocumentEdit]"}
+}
+
+func (t Or_WorkspaceFoldersServerCapabilities_changeNotifications) MarshalJSON() ([]byte, error) {
+	switch x := t.Value.(type) {
+	case bool:
+		return json.Marshal(x)
+	case string:
+		return json.Marshal(x)
+	case nil:
+		return []byte("null"), nil
+	}
+	return nil, fmt.Errorf("type %T not one of [bool string]", t)
+}
+
+func (t *Or_WorkspaceFoldersServerCapabilities_changeNotifications) UnmarshalJSON(x []byte) error {
+	if string(x) == "null" {
+		t.Value = nil
+		return nil
+	}
+	var h0 bool
+	if err := json.Unmarshal(x, &h0); err == nil {
+		t.Value = h0
+		return nil
+	}
+	var h1 string
+	if err := json.Unmarshal(x, &h1); err == nil {
+		t.Value = h1
+		return nil
+	}
+	return &UnmarshalError{"unmarshal failed to match one of [bool string]"}
 }
 
 func (t Or_WorkspaceOptions_textDocumentContent) MarshalJSON() ([]byte, error) {

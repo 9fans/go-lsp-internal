@@ -159,7 +159,7 @@ var goplsType = map[string]string{
 	"Or_TextDocumentContentChangeEvent":                "TextDocumentContentChangePartial",
 	"Or_RelativePattern_baseUri":                       "DocumentURI",
 
-	"Or_WorkspaceFoldersServerCapabilities_changeNotifications": "string",
+	//acme-lsp: "Or_WorkspaceFoldersServerCapabilities_changeNotifications": "string",
 	"Or_WorkspaceSymbol_location":                               "OrPLocation_workspace_symbol",
 
 	"Tuple_ParameterInformation_label_Item1": "UIntCommaUInt",
