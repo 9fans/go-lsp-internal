@@ -9,7 +9,7 @@ package protocol_test
 import (
 	"testing"
 
-	"golang.org/x/tools/gopls/internal/protocol"
+	"9fans.net/internal/go-lsp/lsp/protocol"
 )
 
 // TestURIFromPath tests the conversion between URIs and filenames. The test cases

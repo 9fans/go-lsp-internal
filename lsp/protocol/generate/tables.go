@@ -160,7 +160,7 @@ var goplsType = map[string]string{
 	"Or_RelativePattern_baseUri":                       "DocumentURI",
 
 	//acme-lsp: "Or_WorkspaceFoldersServerCapabilities_changeNotifications": "string",
-	"Or_WorkspaceSymbol_location":                               "OrPLocation_workspace_symbol",
+	"Or_WorkspaceSymbol_location": "OrPLocation_workspace_symbol",
 
 	"Tuple_ParameterInformation_label_Item1": "UIntCommaUInt",
 	"WorkspaceFoldersServerCapabilities":     "WorkspaceFolders5Gn",

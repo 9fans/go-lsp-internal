@@ -1,13 +1,8 @@
-name: Build
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+on: [push, pull_request]
+name: Test
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -38,3 +33,6 @@ jobs:
 
     - name: Build (plan9)
       run: GOOS=plan9 go build -v ./...
+
+    - name: Run tests
+      run: go test -race -v ./...
