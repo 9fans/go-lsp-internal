@@ -64,6 +64,9 @@ type Client interface {
 }
 
 func ClientDispatch(ctx context.Context, client Client, conn *jsonrpc2.Conn, r *jsonrpc2.Request) (bool, error) {
+	if r == nil || r.Params == nil {
+		return false, nil
+	}
 	resp, valid, err := ClientDispatchCall(ctx, client, r.Method, *r.Params)
 	if !valid {
 		return false, nil

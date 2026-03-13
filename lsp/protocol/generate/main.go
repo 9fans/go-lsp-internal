@@ -165,6 +165,9 @@ func writeclient() {
 	out.WriteString("}\n\n")
 	out.WriteString(`
 func ClientDispatch(ctx context.Context, client Client, conn *jsonrpc2.Conn, r *jsonrpc2.Request) (bool, error) {
+	if r == nil || r.Params == nil {
+		return false, nil
+	}
 	resp, valid, err := ClientDispatchCall(ctx, client, r.Method, *r.Params)
 	if !valid {
 		return false, nil
@@ -209,6 +212,9 @@ func writeserver() {
 	out.WriteString(`
 }
 func ServerDispatch(ctx context.Context, server Server, conn *jsonrpc2.Conn, r *jsonrpc2.Request) (bool, error) {
+	if r == nil || r.Params == nil {
+		return false, nil
+	}
 	resp, valid, err := ServerDispatchCall(ctx, server, r.Method, *r.Params)
 	if !valid {
 		return false, nil
