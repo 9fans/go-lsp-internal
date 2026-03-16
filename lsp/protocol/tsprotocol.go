@@ -3899,6 +3899,11 @@ type Or_Result_textDocument_inlineCompletion struct {
 	Value any `json:"value"`
 }
 
+// created for Or [Definition []DefinitionLink]
+type Or_Result_textDocument_typeDefinition struct {
+	Value any `json:"value"`
+}
+
 // created for Or [SemanticTokensFullDelta bool]
 type Or_SemanticTokensOptions_full struct {
 	Value any `json:"value"`

@@ -944,6 +944,36 @@ func (t *Or_Result_textDocument_inlineCompletion) UnmarshalJSON(x []byte) error 
 	return &UnmarshalError{"unmarshal failed to match one of [InlineCompletionList []InlineCompletionItem]"}
 }
 
+func (t Or_Result_textDocument_typeDefinition) MarshalJSON() ([]byte, error) {
+	switch x := t.Value.(type) {
+	case Definition:
+		return json.Marshal(x)
+	case []DefinitionLink:
+		return json.Marshal(x)
+	case nil:
+		return []byte("null"), nil
+	}
+	return nil, fmt.Errorf("type %T not one of [Definition []DefinitionLink]", t)
+}
+
+func (t *Or_Result_textDocument_typeDefinition) UnmarshalJSON(x []byte) error {
+	if string(x) == "null" {
+		t.Value = nil
+		return nil
+	}
+	var h0 Definition
+	if err := json.Unmarshal(x, &h0); err == nil {
+		t.Value = h0
+		return nil
+	}
+	var h1 []DefinitionLink
+	if err := json.Unmarshal(x, &h1); err == nil {
+		t.Value = h1
+		return nil
+	}
+	return &UnmarshalError{"unmarshal failed to match one of [Definition []DefinitionLink]"}
+}
+
 func (t Or_SemanticTokensOptions_full) MarshalJSON() ([]byte, error) {
 	switch x := t.Value.(type) {
 	case SemanticTokensFullDelta:

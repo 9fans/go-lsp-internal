@@ -162,7 +162,7 @@ type Server interface {
 	// See https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification#textDocument_signatureHelp
 	SignatureHelp(context.Context, *SignatureHelpParams) (*SignatureHelp, error)
 	// See https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification#textDocument_typeDefinition
-	TypeDefinition(context.Context, *TypeDefinitionParams) ([]Location, error)
+	TypeDefinition(context.Context, *TypeDefinitionParams) (*Or_Result_textDocument_typeDefinition, error)
 	// See https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification#textDocument_willSave
 	WillSave(context.Context, *WillSaveTextDocumentParams) error
 	// See https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification#textDocument_willSaveWaitUntil
@@ -1459,8 +1459,8 @@ func (s *serverDispatcher) SignatureHelp(ctx context.Context, params *SignatureH
 	}
 	return result, nil
 }
-func (s *serverDispatcher) TypeDefinition(ctx context.Context, params *TypeDefinitionParams) ([]Location, error) {
-	var result []Location
+func (s *serverDispatcher) TypeDefinition(ctx context.Context, params *TypeDefinitionParams) (*Or_Result_textDocument_typeDefinition, error) {
+	var result *Or_Result_textDocument_typeDefinition
 	if err := s.sender.Call(ctx, "textDocument/typeDefinition", params, &result); err != nil {
 		return nil, err
 	}
