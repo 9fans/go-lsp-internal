@@ -3894,6 +3894,16 @@ type Or_Result_textDocument_codeAction_Item0_Elem struct {
 	Value any `json:"value"`
 }
 
+// created for Or [CompletionList []CompletionItem]
+type Or_Result_textDocument_completion struct {
+	Value any `json:"value"`
+}
+
+// created for Or [Definition []DefinitionLink]
+type Or_Result_textDocument_definition struct {
+	Value any `json:"value"`
+}
+
 // created for Or [InlineCompletionList []InlineCompletionItem]
 type Or_Result_textDocument_inlineCompletion struct {
 	Value any `json:"value"`

@@ -914,6 +914,66 @@ func (t *Or_Result_textDocument_codeAction_Item0_Elem) UnmarshalJSON(x []byte) e
 	return &UnmarshalError{"unmarshal failed to match one of [CodeAction Command]"}
 }
 
+func (t Or_Result_textDocument_completion) MarshalJSON() ([]byte, error) {
+	switch x := t.Value.(type) {
+	case CompletionList:
+		return json.Marshal(x)
+	case []CompletionItem:
+		return json.Marshal(x)
+	case nil:
+		return []byte("null"), nil
+	}
+	return nil, fmt.Errorf("type %T not one of [CompletionList []CompletionItem]", t)
+}
+
+func (t *Or_Result_textDocument_completion) UnmarshalJSON(x []byte) error {
+	if string(x) == "null" {
+		t.Value = nil
+		return nil
+	}
+	var h0 CompletionList
+	if err := json.Unmarshal(x, &h0); err == nil {
+		t.Value = h0
+		return nil
+	}
+	var h1 []CompletionItem
+	if err := json.Unmarshal(x, &h1); err == nil {
+		t.Value = h1
+		return nil
+	}
+	return &UnmarshalError{"unmarshal failed to match one of [CompletionList []CompletionItem]"}
+}
+
+func (t Or_Result_textDocument_definition) MarshalJSON() ([]byte, error) {
+	switch x := t.Value.(type) {
+	case Definition:
+		return json.Marshal(x)
+	case []DefinitionLink:
+		return json.Marshal(x)
+	case nil:
+		return []byte("null"), nil
+	}
+	return nil, fmt.Errorf("type %T not one of [Definition []DefinitionLink]", t)
+}
+
+func (t *Or_Result_textDocument_definition) UnmarshalJSON(x []byte) error {
+	if string(x) == "null" {
+		t.Value = nil
+		return nil
+	}
+	var h0 Definition
+	if err := json.Unmarshal(x, &h0); err == nil {
+		t.Value = h0
+		return nil
+	}
+	var h1 []DefinitionLink
+	if err := json.Unmarshal(x, &h1); err == nil {
+		t.Value = h1
+		return nil
+	}
+	return &UnmarshalError{"unmarshal failed to match one of [Definition []DefinitionLink]"}
+}
+
 func (t Or_Result_textDocument_inlineCompletion) MarshalJSON() ([]byte, error) {
 	switch x := t.Value.(type) {
 	case InlineCompletionList:

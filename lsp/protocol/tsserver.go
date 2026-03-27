@@ -94,11 +94,11 @@ type Server interface {
 	// See https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification#textDocument_colorPresentation
 	ColorPresentation(context.Context, *ColorPresentationParams) ([]ColorPresentation, error)
 	// See https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification#textDocument_completion
-	Completion(context.Context, *CompletionParams) (*CompletionList, error)
+	Completion(context.Context, *CompletionParams) (*Or_Result_textDocument_completion, error)
 	// See https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification#textDocument_declaration
 	Declaration(context.Context, *DeclarationParams) (*Or_textDocument_declaration, error)
 	// See https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification#textDocument_definition
-	Definition(context.Context, *DefinitionParams) ([]Location, error)
+	Definition(context.Context, *DefinitionParams) (*Or_Result_textDocument_definition, error)
 	// See https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification#textDocument_diagnostic
 	Diagnostic(context.Context, *DocumentDiagnosticParams) (*DocumentDiagnosticReport, error)
 	// See https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification#textDocument_didChange
@@ -1237,8 +1237,8 @@ func (s *serverDispatcher) ColorPresentation(ctx context.Context, params *ColorP
 	}
 	return result, nil
 }
-func (s *serverDispatcher) Completion(ctx context.Context, params *CompletionParams) (*CompletionList, error) {
-	var result *CompletionList
+func (s *serverDispatcher) Completion(ctx context.Context, params *CompletionParams) (*Or_Result_textDocument_completion, error) {
+	var result *Or_Result_textDocument_completion
 	if err := s.sender.Call(ctx, "textDocument/completion", params, &result); err != nil {
 		return nil, err
 	}
@@ -1251,8 +1251,8 @@ func (s *serverDispatcher) Declaration(ctx context.Context, params *DeclarationP
 	}
 	return result, nil
 }
-func (s *serverDispatcher) Definition(ctx context.Context, params *DefinitionParams) ([]Location, error) {
-	var result []Location
+func (s *serverDispatcher) Definition(ctx context.Context, params *DefinitionParams) (*Or_Result_textDocument_definition, error) {
+	var result *Or_Result_textDocument_definition
 	if err := s.sender.Call(ctx, "textDocument/definition", params, &result); err != nil {
 		return nil, err
 	}
